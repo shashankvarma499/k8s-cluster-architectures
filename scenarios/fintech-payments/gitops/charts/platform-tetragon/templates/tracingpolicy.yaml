@@ -1,0 +1,45 @@
+apiVersion: cilium.io/v1alpha1
+kind: TracingPolicy
+metadata:
+  name: deny-shell-in-cde
+spec:
+  podSelector:
+    matchLabels:
+      pci.northstar.example/scope: cde
+  kprobes:
+    - call: "sys_execve"
+      syscall: true
+      args:
+        - index: 0
+          type: "string"
+      selectors:
+        - matchArgs:
+            - index: 0
+              operator: "Equal"
+              values:
+                - "/bin/sh"
+                - "/bin/bash"
+                - "/usr/bin/sh"
+                - "/usr/bin/bash"
+          matchActions:
+            - action: Sigkill
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: tetragon-install
+data:
+  helm-values.yaml: |
+    tetragon:
+      image:
+        tag: {{ .Values.install.imageTag }}
+    export:
+      stdout:
+        enabled: true
+  README: |
+    helm upgrade --install tetragon cilium/tetragon --version {{ .Values.install.version }} -n kube-system
+    https://github.com/cilium/tetragon/releases/tag/{{ .Values.install.imageTag }}
+    TracingPolicyNamespaced is namespaced; apply this chart per CDE namespace or
+    change destination. Default destination is kube-system (cluster-wide TracingPolicy
+    equivalent is TracingPolicy, not used here so PSA-restricted namespaces stay
+    self-contained). Copy deny-shell-in-cde into each CDE namespace.

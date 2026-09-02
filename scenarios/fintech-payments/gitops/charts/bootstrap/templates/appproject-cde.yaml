@@ -1,0 +1,31 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: cde
+  namespace: argocd
+spec:
+  description: Cardholder data environment applications
+  sourceRepos:
+    - {{ .Values.repoURL | quote }}
+  destinations:
+    - namespace: cde-gateway
+      server: {{ .Values.destinationServer | quote }}
+    - namespace: cde-api
+      server: {{ .Values.destinationServer | quote }}
+    - namespace: cde-ledger
+      server: {{ .Values.destinationServer | quote }}
+    - namespace: vault
+      server: {{ .Values.destinationServer | quote }}
+    - namespace: velero
+      server: {{ .Values.destinationServer | quote }}
+  clusterResourceWhitelist: []
+  namespaceResourceWhitelist:
+    - group: "*"
+      kind: "*"
+  roles:
+    - name: platform-admin
+      description: Break-glass sync for CDE
+      policies:
+        - p, proj:cde:platform-admin, applications, *, cde/*, allow
+      groups:
+        - payments-platform-admins

@@ -1,0 +1,6 @@
+apiVersion: v2
+name: platform-vault
+description: Vault HA Raft values (chart 0.34.1, app 2.0.4) plus CSI SecretProviderClass notes.
+type: application
+version: 0.1.0
+appVersion: "2.0.4"

@@ -1,0 +1,7 @@
+demo-app {{ .Chart.Version }} is installed in namespace {{ .Release.Namespace }}.
+
+  kubectl get pods,svc,ingress,hpa,networkpolicy -n {{ .Release.Namespace }}
+  curl -sS http://{{ .Values.ingressHost }}/
+  curl -sS http://{{ .Values.ingressHost }}/api
+
+Secret values in values.yaml are playground examples only.

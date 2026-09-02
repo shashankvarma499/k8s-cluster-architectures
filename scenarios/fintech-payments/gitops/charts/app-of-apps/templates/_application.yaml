@@ -1,0 +1,32 @@
+{{- define "northstar.application" -}}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: {{ .name }}
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: {{ .wave | quote }}
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: {{ .project }}
+  source:
+    repoURL: {{ .root.Values.repoURL | quote }}
+    targetRevision: {{ .root.Values.targetRevision | quote }}
+    path: {{ .path | quote }}
+    {{- if .helm }}
+    helm:
+      parameters:
+        - name: repoURL
+          value: {{ .root.Values.repoURL | quote }}
+    {{- end }}
+  destination:
+    server: {{ .root.Values.destinationServer | quote }}
+    namespace: {{ .namespace }}
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=false
+{{- end -}}

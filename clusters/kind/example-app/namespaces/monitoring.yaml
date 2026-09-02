@@ -1,0 +1,24 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: monitoring
+  labels:
+    app.kubernetes.io/name: monitoring
+    app.kubernetes.io/part-of: kind-playground
+    pod-security.kubernetes.io/enforce: baseline
+    pod-security.kubernetes.io/audit: baseline
+    pod-security.kubernetes.io/warn: baseline
+---
+# Marker only: this playground does not install Prometheus/Grafana.
+# metrics-server (for HPA) lives in kube-system; see up.sh.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: monitoring-notes
+  namespace: monitoring
+  labels:
+    app.kubernetes.io/part-of: kind-playground
+data:
+  stack: "prometheus-grafana-loki-tempo"
+  status: "not-installed-in-kind-playground"
+  metrics-server-namespace: kube-system

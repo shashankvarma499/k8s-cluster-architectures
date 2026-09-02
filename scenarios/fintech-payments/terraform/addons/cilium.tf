@@ -1,0 +1,52 @@
+# Cilium as the eBPF datapath, chained with the Amazon VPC CNI so the managed
+# node group can become Ready in a single terraform apply.
+# Helm values match https://docs.cilium.io/en/stable/installation/k8s-install-helm/
+# (EKS chaining). Chart source: https://helm.cilium.io/
+resource "helm_release" "cilium" {
+  name             = "cilium"
+  namespace        = "kube-system"
+  create_namespace = true
+  repository       = "https://helm.cilium.io/"
+  chart            = "cilium"
+  version          = var.cilium_version
+  wait             = true
+  timeout          = 600
+
+  values = [
+    yamlencode({
+      cluster = {
+        name = var.cluster_name
+        id   = 1
+      }
+      k8sServiceHost = replace(var.cluster_endpoint, "https://", "")
+      k8sServicePort = 443
+      cni = {
+        chainingMode = "aws-cni"
+        exclusive    = false
+      }
+      enableIPv4Masquerade = false
+      routingMode          = "native"
+      hubble = {
+        enabled = true
+        relay = {
+          enabled = true
+        }
+        metrics = {
+          enableOpenMetrics = true
+          enabled = [
+            "dns",
+            "drop",
+            "tcp",
+            "flow",
+            "port-distribution",
+            "icmp",
+            "httpV2:exemplars=true;labelsContext=source_ip,source_namespace,source_workload,destination_ip,destination_namespace,destination_workload,traffic_direction",
+          ]
+        }
+      }
+      operator = {
+        replicas = 2
+      }
+    })
+  ]
+}

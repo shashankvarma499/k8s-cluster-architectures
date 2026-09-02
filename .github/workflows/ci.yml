@@ -43,7 +43,8 @@ jobs:
           mapfile -t files < <(find . -type f \( -name '*.yaml' -o -name '*.yml' \) \
             -not -path './.github/*' \
             -not -path '*/charts/*' \
-            -not -path '*/.terraform/*')
+            -not -path '*/.terraform/*' \
+            -not -name 'kind-config*.yaml')
           if [ "${#files[@]}" -eq 0 ]; then echo "no standalone manifests found"; exit 0; fi
           for f in "${files[@]}"; do
             echo "::group::kubeconform $f"

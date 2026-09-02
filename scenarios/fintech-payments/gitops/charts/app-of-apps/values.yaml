@@ -1,0 +1,4 @@
+repoURL: https://github.com/example/k8s-cluster-architectures.git
+targetRevision: main
+destinationServer: https://kubernetes.default.svc
+basePath: scenarios/fintech-payments

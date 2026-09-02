@@ -1,0 +1,8 @@
+install:
+  chart: vault
+  repo: https://helm.releases.hashicorp.com
+  version: 0.34.1
+  appVersion: "2.0.4"
+kmsKeyId: "11112222-3333-4444-5555-666677778888"
+roleArn: arn:aws:iam::123456789012:role/northstar-payments-vault
+region: us-west-2

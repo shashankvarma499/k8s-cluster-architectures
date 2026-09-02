@@ -1,0 +1,21 @@
+{{- $root := . -}}
+{{- $base := .Values.basePath -}}
+{{- range $app := list
+  (dict "name" "namespaces" "project" "platform" "namespace" "argocd" "wave" "-4" "path" (printf "%s/gitops/namespaces" $base) "helm" false)
+  (dict "name" "networkpolicies" "project" "platform" "namespace" "argocd" "wave" "1" "path" (printf "%s/gitops/networkpolicies" $base) "helm" false)
+  (dict "name" "poddisruptionbudgets" "project" "platform" "namespace" "argocd" "wave" "1" "path" (printf "%s/gitops/poddisruptionbudgets" $base) "helm" false)
+  (dict "name" "platform-gatekeeper" "project" "platform" "namespace" "gatekeeper-system" "wave" "-3" "path" (printf "%s/policies/charts/gatekeeper-policies" $base) "helm" true)
+  (dict "name" "platform-rollouts" "project" "platform" "namespace" "argo-rollouts" "wave" "-2" "path" (printf "%s/gitops/charts/platform-rollouts" $base) "helm" true)
+  (dict "name" "platform-vault" "project" "cde" "namespace" "vault" "wave" "-2" "path" (printf "%s/gitops/charts/platform-vault" $base) "helm" true)
+  (dict "name" "platform-tetragon" "project" "platform" "namespace" "kube-system" "wave" "-2" "path" (printf "%s/gitops/charts/platform-tetragon" $base) "helm" true)
+  (dict "name" "platform-observability" "project" "platform" "namespace" "observability" "wave" "-1" "path" (printf "%s/gitops/charts/platform-observability" $base) "helm" true)
+  (dict "name" "platform-velero" "project" "cde" "namespace" "velero" "wave" "-1" "path" (printf "%s/gitops/charts/platform-velero" $base) "helm" true)
+  (dict "name" "payments-gateway" "project" "cde" "namespace" "cde-gateway" "wave" "0" "path" (printf "%s/gitops/charts/payments-gateway" $base) "helm" true)
+  (dict "name" "payments-api" "project" "cde" "namespace" "cde-api" "wave" "0" "path" (printf "%s/gitops/charts/payments-api" $base) "helm" true)
+  (dict "name" "payments-ledger" "project" "cde" "namespace" "cde-ledger" "wave" "0" "path" (printf "%s/gitops/charts/payments-ledger" $base) "helm" true)
+  (dict "name" "payments-fraud" "project" "platform" "namespace" "fraud" "wave" "0" "path" (printf "%s/gitops/charts/payments-fraud" $base) "helm" true)
+  (dict "name" "webhooks" "project" "platform" "namespace" "webhooks" "wave" "0" "path" (printf "%s/gitops/charts/webhooks" $base) "helm" true)
+}}
+---
+{{ include "northstar.application" (dict "root" $root "name" $app.name "project" $app.project "namespace" $app.namespace "wave" $app.wave "path" $app.path "helm" $app.helm) }}
+{{- end }}

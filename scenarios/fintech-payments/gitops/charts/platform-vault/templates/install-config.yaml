@@ -1,0 +1,40 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: vault-install
+  labels:
+    app.kubernetes.io/name: vault
+data:
+  helm-values.yaml: |
+    global:
+      enabled: true
+    injector:
+      enabled: true
+      replicas: 2
+    csi:
+      enabled: true
+    server:
+      ha:
+        enabled: true
+        replicas: 3
+        raft:
+          enabled: true
+      extraEnvironmentVars:
+        VAULT_SEAL_TYPE: awskms
+        VAULT_AWSKMS_SEAL_KEY_ID: {{ .Values.kmsKeyId | quote }}
+        AWS_REGION: {{ .Values.region | quote }}
+      serviceAccount:
+        annotations:
+          eks.amazonaws.com/role-arn: {{ .Values.roleArn | quote }}
+      affinity: |
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchLabels:
+                  app.kubernetes.io/name: vault
+                  component: server
+              topologyKey: topology.kubernetes.io/zone
+  README: |
+    HashiCorp Vault Helm {{ .Values.install.version }} (app {{ .Values.install.appVersion }}).
+    https://developer.hashicorp.com/vault/docs/deploy/kubernetes/helm
+    Replace kmsKeyId and roleArn with terraform outputs before first unseal.

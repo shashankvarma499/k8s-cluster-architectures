@@ -1,0 +1,33 @@
+apiVersion: templates.gatekeeper.sh/v1
+kind: ConstraintTemplate
+metadata:
+  name: k8sgatewayhttpsonly
+  annotations:
+    metadata.gatekeeper.sh/title: "Gateway HTTPS Only"
+    description: Requires Gateway listeners to use HTTPS or TLS (Gateway API v1).
+spec:
+  crd:
+    spec:
+      names:
+        kind: K8sGatewayHttpsOnly
+      validation:
+        openAPIV3Schema:
+          type: object
+  targets:
+    - target: admission.k8s.gatekeeper.sh
+      rego: |
+        package k8sgatewayhttpsonly
+
+        violation[{"msg": msg}] {
+          input.review.kind.kind == "Gateway"
+          listener := input.review.object.spec.listeners[_]
+          not https_or_tls(listener.protocol)
+          msg := sprintf("Gateway listener %v must use HTTPS or TLS, got %v", [listener.name, listener.protocol])
+        }
+
+        https_or_tls(proto) {
+          proto == "HTTPS"
+        }
+        https_or_tls(proto) {
+          proto == "TLS"
+        }

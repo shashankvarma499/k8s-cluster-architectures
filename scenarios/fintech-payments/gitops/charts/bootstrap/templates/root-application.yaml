@@ -1,0 +1,30 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: northstar-root
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: platform
+  source:
+    repoURL: {{ .Values.repoURL | quote }}
+    targetRevision: {{ .Values.targetRevision | quote }}
+    path: {{ .Values.appsPath | quote }}
+    helm:
+      parameters:
+        - name: repoURL
+          value: {{ .Values.repoURL | quote }}
+        - name: targetRevision
+          value: {{ .Values.targetRevision | quote }}
+        - name: destinationServer
+          value: {{ .Values.destinationServer | quote }}
+  destination:
+    server: {{ .Values.destinationServer | quote }}
+    namespace: argocd
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=false

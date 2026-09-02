@@ -1,0 +1,7 @@
+# Values consumed by this wrapper. The Application can also point at
+# https://argoproj.github.io/argo-helm chart argo-rollouts 2.41.1 directly.
+install:
+  chart: argo-rollouts
+  repo: https://argoproj.github.io/argo-helm
+  version: 2.41.1
+  appVersion: v1.9.1

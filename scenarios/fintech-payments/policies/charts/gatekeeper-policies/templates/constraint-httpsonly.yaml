@@ -1,0 +1,14 @@
+apiVersion: constraints.gatekeeper.sh/v1beta1
+kind: K8sHttpsOnly
+metadata:
+  name: ingress-https-only
+spec:
+  enforcementAction: deny
+  match:
+    kinds:
+      - apiGroups: ["networking.k8s.io"]
+        kinds: ["Ingress"]
+    excludedNamespaces:
+      {{- toYaml .Values.excludedNamespaces | nindent 6 }}
+  parameters:
+    tlsOptional: false

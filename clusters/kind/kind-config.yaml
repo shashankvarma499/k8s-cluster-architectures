@@ -1,0 +1,38 @@
+# kind cluster configuration for the local playground.
+#
+# Kubeconfig output:
+#   kind writes the admin kubeconfig to $KUBECONFIG, or ~/.kube/config if
+#   that variable is unset. Re-export at any time with:
+#     kind export kubeconfig --name playground
+#   The kubectl context is named "kind-playground".
+#
+# Ingress:
+#   extraPortMappings forward host :80/:443 onto the control-plane node.
+#   The ingress-nginx controller is pinned to this node via the
+#   ingress-ready=true label (see up.sh). Multi-node kind clusters MUST
+#   schedule the controller on the mapped node:
+#   https://kind.sigs.k8s.io/docs/user/ingress/
+#
+# Kubernetes version:
+#   Node image is pinned to kind v0.33.0's Kubernetes 1.37.0 image:
+#   https://github.com/kubernetes-sigs/kind/releases/tag/v0.33.0
+#   Delete the `image:` lines to use whatever default your kind binary ships.
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+name: playground
+nodes:
+  - role: control-plane
+    image: kindest/node:v1.37.0@sha256:a1ed56cfb0e7b93589bdf97c8cd566405a265939e3620fc4f5de89adff580ae5
+    labels:
+      ingress-ready: "true"
+    extraPortMappings:
+      - containerPort: 80
+        hostPort: 80
+        protocol: TCP
+      - containerPort: 443
+        hostPort: 443
+        protocol: TCP
+  - role: worker
+    image: kindest/node:v1.37.0@sha256:a1ed56cfb0e7b93589bdf97c8cd566405a265939e3620fc4f5de89adff580ae5
+  - role: worker
+    image: kindest/node:v1.37.0@sha256:a1ed56cfb0e7b93589bdf97c8cd566405a265939e3620fc4f5de89adff580ae5

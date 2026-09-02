@@ -1,0 +1,6 @@
+apiVersion: v2
+name: platform-observability
+description: OpenTelemetry Collector CR plus kube-prometheus-stack / Loki / Tempo install values.
+type: application
+version: 0.1.0
+appVersion: "88.6.1"

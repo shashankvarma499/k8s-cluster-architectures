@@ -1,0 +1,6 @@
+apiVersion: v2
+name: karpenter-nodes
+description: Karpenter v1 NodePool (was Provisioner) and EC2NodeClass (was AWSNodeTemplate)
+type: application
+version: 0.1.0
+appVersion: "1.14.1"

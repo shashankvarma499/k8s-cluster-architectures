@@ -1,0 +1,6 @@
+# Replace repoURL with the Git remote Argo CD can clone.
+# See gitops/README.md.
+repoURL: https://github.com/example/k8s-cluster-architectures.git
+targetRevision: main
+destinationServer: https://kubernetes.default.svc
+appsPath: scenarios/fintech-payments/gitops/charts/app-of-apps

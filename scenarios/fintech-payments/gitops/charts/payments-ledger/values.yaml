@@ -1,0 +1,23 @@
+name: payments-ledger
+replicaCount: 3
+image:
+  repository: public.ecr.aws/docker/library/nginx
+  tag: "1.27-alpine"
+  pullPolicy: IfNotPresent
+service:
+  port: 8080
+  targetPort: 80
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 256Mi
+persistence:
+  size: 20Gi
+  storageClass: gp3
+podSecurity:
+  runAsUser: 101
+  runAsGroup: 101
+  fsGroup: 101

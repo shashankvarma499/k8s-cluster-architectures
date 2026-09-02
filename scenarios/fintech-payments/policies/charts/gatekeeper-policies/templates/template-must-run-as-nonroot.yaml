@@ -1,0 +1,49 @@
+apiVersion: templates.gatekeeper.sh/v1
+kind: ConstraintTemplate
+metadata:
+  name: k8spspmustrunasnonroot
+  annotations:
+    metadata.gatekeeper.sh/title: "Must Run As Non-Root"
+    description: Requires runAsNonRoot or a non-zero runAsUser on every container.
+spec:
+  crd:
+    spec:
+      names:
+        kind: K8sPSPMustRunAsNonRoot
+      validation:
+        openAPIV3Schema:
+          type: object
+  targets:
+    - target: admission.k8s.gatekeeper.sh
+      rego: |
+        package k8spspmustrunasnonroot
+
+        violation[{"msg": msg}] {
+          c := input_containers[_]
+          not is_non_root(c)
+          msg := sprintf("container %v must set securityContext.runAsNonRoot=true or runAsUser!=0", [c.name])
+        }
+
+        is_non_root(c) {
+          c.securityContext.runAsNonRoot == true
+        }
+        is_non_root(c) {
+          c.securityContext.runAsUser > 0
+        }
+        is_non_root(c) {
+          not c.securityContext.runAsUser
+          not c.securityContext.runAsNonRoot
+          input.review.object.spec.securityContext.runAsNonRoot == true
+        }
+        is_non_root(c) {
+          not c.securityContext.runAsUser
+          not c.securityContext.runAsNonRoot
+          input.review.object.spec.securityContext.runAsUser > 0
+        }
+
+        input_containers[c] {
+          c := input.review.object.spec.containers[_]
+        }
+        input_containers[c] {
+          c := input.review.object.spec.initContainers[_]
+        }

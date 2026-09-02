@@ -1,0 +1,83 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: observability-install
+  labels:
+    app.kubernetes.io/name: observability
+data:
+  kube-prometheus-stack-values.yaml: |
+    grafana:
+      replicas: 2
+    prometheus:
+      prometheusSpec:
+        replicas: 2
+        retention: 15d
+        storageSpec:
+          volumeClaimTemplate:
+            spec:
+              storageClassName: gp3
+              accessModes: ["ReadWriteOnce"]
+              resources:
+                requests:
+                  storage: 100Gi
+    alertmanager:
+      alertmanagerSpec:
+        replicas: 3
+  README: |
+    kube-prometheus-stack {{ .Values.kubePrometheusStack.version }}
+    https://github.com/prometheus-community/helm-charts
+    Loki OSS Helm lives at grafana-community/helm-charts as of 2026-03-16.
+    OpenTelemetry Collector CR is in this chart (requires the operator).
+---
+apiVersion: opentelemetry.io/v1beta1
+kind: OpenTelemetryCollector
+metadata:
+  name: otel
+  labels:
+    app.kubernetes.io/name: otel-collector
+spec:
+  mode: deployment
+  replicas: 2
+  config:
+    receivers:
+      otlp:
+        protocols:
+          grpc:
+            endpoint: 0.0.0.0:4317
+          http:
+            endpoint: 0.0.0.0:4318
+    processors:
+      attributes/redact:
+        actions:
+          - key: card.pan
+            action: delete
+          - key: http.request.header.authorization
+            action: delete
+      batch: {}
+      memory_limiter:
+        check_interval: 1s
+        limit_percentage: 75
+        spike_limit_percentage: 15
+    exporters:
+      prometheus:
+        endpoint: 0.0.0.0:8889
+      otlp/tempo:
+        endpoint: tempo.observability.svc:4317
+        tls:
+          insecure: true
+      loki:
+        endpoint: http://loki-gateway.observability.svc:80/loki/api/v1/push
+    service:
+      pipelines:
+        traces:
+          receivers: [otlp]
+          processors: [memory_limiter, attributes/redact, batch]
+          exporters: [otlp/tempo]
+        metrics:
+          receivers: [otlp]
+          processors: [memory_limiter, batch]
+          exporters: [prometheus]
+        logs:
+          receivers: [otlp]
+          processors: [memory_limiter, attributes/redact, batch]
+          exporters: [loki]

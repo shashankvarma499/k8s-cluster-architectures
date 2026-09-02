@@ -1,0 +1,20 @@
+clusterName: northstar-payments
+nodeRoleName: northstar-payments-karpenter-node
+amiAlias: al2023@latest
+instanceCategories:
+  - c
+  - m
+  - r
+volumeSize: 40Gi
+cde:
+  expireAfter: 720h
+  limits:
+    cpu: "200"
+    memory: 400Gi
+  consolidateAfter: 5m
+platform:
+  expireAfter: 720h
+  limits:
+    cpu: "400"
+    memory: 800Gi
+  consolidateAfter: 1m

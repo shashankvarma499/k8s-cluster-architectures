@@ -1,0 +1,12 @@
+apiVersion: constraints.gatekeeper.sh/v1beta1
+kind: K8sGatewayHttpsOnly
+metadata:
+  name: gateway-https-only
+spec:
+  enforcementAction: deny
+  match:
+    kinds:
+      - apiGroups: ["gateway.networking.k8s.io"]
+        kinds: ["Gateway"]
+    excludedNamespaces:
+      {{- toYaml .Values.excludedNamespaces | nindent 6 }}

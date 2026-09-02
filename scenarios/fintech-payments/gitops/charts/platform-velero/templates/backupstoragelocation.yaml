@@ -1,0 +1,98 @@
+apiVersion: velero.io/v1
+kind: BackupStorageLocation
+metadata:
+  name: default
+  namespace: velero
+spec:
+  provider: aws
+  objectStorage:
+    bucket: {{ .Values.bucket | quote }}
+    prefix: {{ .Values.prefix | quote }}
+  config:
+    region: {{ .Values.region | quote }}
+---
+apiVersion: velero.io/v1
+kind: VolumeSnapshotLocation
+metadata:
+  name: default
+  namespace: velero
+spec:
+  provider: aws
+  config:
+    region: {{ .Values.region | quote }}
+---
+apiVersion: velero.io/v1
+kind: Schedule
+metadata:
+  name: cde-hourly
+  namespace: velero
+spec:
+  schedule: "0 * * * *"
+  template:
+    includedNamespaces:
+      - cde-gateway
+      - cde-api
+      - cde-ledger
+      - vault
+    snapshotVolumes: true
+    defaultVolumesToFsBackup: false
+    ttl: 720h0m0s
+    storageLocation: default
+    volumeSnapshotLocations:
+      - default
+---
+apiVersion: velero.io/v1
+kind: Schedule
+metadata:
+  name: platform-daily
+  namespace: velero
+spec:
+  schedule: "30 2 * * *"
+  template:
+    includedNamespaces:
+      - argocd
+      - observability
+      - gatekeeper-system
+    snapshotVolumes: false
+    ttl: 336h0m0s
+    storageLocation: default
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: velero-install
+  namespace: velero
+data:
+  helm-values.yaml: |
+    configuration:
+      backupStorageLocation:
+        - name: default
+          provider: aws
+          bucket: {{ .Values.bucket | quote }}
+          prefix: {{ .Values.prefix | quote }}
+          config:
+            region: {{ .Values.region | quote }}
+      volumeSnapshotLocation:
+        - name: default
+          provider: aws
+          config:
+            region: {{ .Values.region | quote }}
+      features: EnableCSI
+    credentials:
+      useSecret: false
+    serviceAccount:
+      server:
+        create: true
+        name: velero
+        annotations:
+          eks.amazonaws.com/role-arn: {{ .Values.roleArn | quote }}
+    initContainers:
+      - name: velero-plugin-for-aws
+        image: velero/velero-plugin-for-aws:v1.10.0
+        volumeMounts:
+          - mountPath: /target
+            name: plugins
+  README: |
+    AWS blog (May 2026) used Helm chart 11.4.0 with plugin v1.10.0 and Pod Identity/IRSA.
+    https://aws.amazon.com/blogs/containers/back-up-and-restore-your-amazon-eks-cluster-resources-using-velero/
+    CRDs are velero.io/v1 (https://velero.io/docs/main/api-types/backupstoragelocation).

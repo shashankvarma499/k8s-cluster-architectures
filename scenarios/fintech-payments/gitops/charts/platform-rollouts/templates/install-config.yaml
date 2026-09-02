@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: argo-rollouts-install
+  labels:
+    app.kubernetes.io/name: argo-rollouts
+data:
+  README: |
+    Install with:
+      helm upgrade --install argo-rollouts argo/argo-rollouts \
+        --version {{ .Values.install.version }} \
+        --namespace argo-rollouts \
+        --set dashboard.enabled=false \
+        --set controller.replicas=2
+    Chart {{ .Values.install.chart }} {{ .Values.install.version }} ships Argo Rollouts {{ .Values.install.appVersion }}.
+    https://github.com/argoproj/argo-rollouts/releases/tag/v1.9.1
+  helm-values.yaml: |
+    dashboard:
+      enabled: false
+    controller:
+      replicas: 2
+      metrics:
+        enabled: true

@@ -1,0 +1,8 @@
+bucket: northstar-payments-velero-123456789012
+region: us-west-2
+roleArn: arn:aws:iam::123456789012:role/northstar-payments-velero
+prefix: velero
+install:
+  chart: velero
+  repo: https://vmware-tanzu.github.io/helm-charts
+  version: "11.4.0"

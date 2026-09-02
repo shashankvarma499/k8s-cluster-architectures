@@ -1,0 +1,6 @@
+apiVersion: v2
+name: platform-velero
+description: Velero BackupStorageLocation, VolumeSnapshotLocation, and hourly CDE Schedule.
+type: application
+version: 0.1.0
+appVersion: "1.16"

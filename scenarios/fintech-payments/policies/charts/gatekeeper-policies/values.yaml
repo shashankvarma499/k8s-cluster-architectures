@@ -1,0 +1,9 @@
+excludedNamespaces:
+  - kube-system
+  - kube-public
+  - kube-node-lease
+  - gatekeeper-system
+  - argocd
+  - cilium-secrets
+cpuLimit: "4"
+memoryLimit: "8Gi"

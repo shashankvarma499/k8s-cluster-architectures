@@ -1,0 +1,18 @@
+clusterName: k8s-arch-eks
+nodeRoleName: k8s-arch-eks-karpenter-node
+amiAlias: al2023@latest
+capacityTypes:
+  - on-demand
+  - spot
+instanceCategories:
+  - c
+  - m
+  - r
+disruption:
+  consolidationPolicy: WhenEmptyOrUnderutilized
+  consolidateAfter: 1m
+limits:
+  cpu: "1000"
+  memory: 1000Gi
+expireAfter: 720h
+volumeSize: 40Gi

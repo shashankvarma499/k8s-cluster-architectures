@@ -1,0 +1,6 @@
+apiVersion: v2
+name: app-of-apps
+description: Child Argo CD Applications for Northstar Payments
+type: application
+version: 0.1.0
+appVersion: "3.5.2"

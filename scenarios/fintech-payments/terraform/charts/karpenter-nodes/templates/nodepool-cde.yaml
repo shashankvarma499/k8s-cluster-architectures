@@ -1,0 +1,48 @@
+apiVersion: karpenter.sh/v1
+kind: NodePool
+metadata:
+  name: cde
+  labels:
+    app.kubernetes.io/managed-by: Helm
+    pci.northstar.example/scope: cde
+spec:
+  template:
+    metadata:
+      labels:
+        workload: cde
+        pci.northstar.example/cde: "true"
+    spec:
+      nodeClassRef:
+        group: karpenter.k8s.aws
+        kind: EC2NodeClass
+        name: default
+      expireAfter: {{ .Values.cde.expireAfter | quote }}
+      taints:
+        - key: pci.northstar.example/cde
+          value: "true"
+          effect: NoSchedule
+      requirements:
+        - key: kubernetes.io/arch
+          operator: In
+          values: ["amd64"]
+        - key: kubernetes.io/os
+          operator: In
+          values: ["linux"]
+        - key: karpenter.sh/capacity-type
+          operator: In
+          values: ["on-demand"]
+        - key: karpenter.k8s.aws/instance-category
+          operator: In
+          values:
+            {{- range .Values.instanceCategories }}
+            - {{ . | quote }}
+            {{- end }}
+        - key: karpenter.k8s.aws/instance-generation
+          operator: Gt
+          values: ["2"]
+  limits:
+    cpu: {{ .Values.cde.limits.cpu | quote }}
+    memory: {{ .Values.cde.limits.memory | quote }}
+  disruption:
+    consolidationPolicy: WhenEmpty
+    consolidateAfter: {{ .Values.cde.consolidateAfter | quote }}

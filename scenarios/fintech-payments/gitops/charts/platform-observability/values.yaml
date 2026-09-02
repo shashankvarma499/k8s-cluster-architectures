@@ -1,0 +1,14 @@
+kubePrometheusStack:
+  chart: kube-prometheus-stack
+  repo: https://prometheus-community.github.io/helm-charts
+  version: 88.6.1
+loki:
+  chart: loki
+  repo: https://grafana-community.github.io/helm-charts
+  note: OSS chart moved here 2026-03-16 (forked at 6.55.0).
+tempo:
+  chart: tempo-distributed
+  repo: https://grafana.github.io/helm-charts
+otelOperator:
+  chart: opentelemetry-operator
+  repo: https://open-telemetry.github.io/opentelemetry-helm-charts

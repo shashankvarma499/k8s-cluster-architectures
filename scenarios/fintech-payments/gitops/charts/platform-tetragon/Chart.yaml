@@ -1,0 +1,6 @@
+apiVersion: v2
+name: platform-tetragon
+description: Tetragon TracingPolicy for CDE namespaces (chart 1.7.0, image v1.7.1).
+type: application
+version: 0.1.0
+appVersion: "1.7.1"

@@ -1,0 +1,13 @@
+apiVersion: v2
+name: demo-app
+description: Same workload as clusters/kind/example-app, packaged as a Helm chart.
+type: application
+version: 0.1.0
+appVersion: "0.4"
+kubeVersion: ">=1.30.0-0"
+keywords:
+  - demo
+  - kind
+sources:
+  - https://hub.docker.com/r/nginxdemos/hello
+  - https://hub.docker.com/r/hashicorp/http-echo

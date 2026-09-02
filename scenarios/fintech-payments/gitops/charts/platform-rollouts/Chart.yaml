@@ -1,0 +1,6 @@
+apiVersion: v2
+name: platform-rollouts
+description: Argo Rollouts install values. Apply the upstream chart 2.41.1 (app v1.9.1).
+type: application
+version: 0.1.0
+appVersion: "1.9.1"

@@ -1,0 +1,6 @@
+apiVersion: v2
+name: karpenter-nodes
+description: Karpenter v1 EC2NodeClass plus CDE (on-demand) and platform (Spot+OD) NodePools
+type: application
+version: 0.1.0
+appVersion: "1.14.1"
