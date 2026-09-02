@@ -1,0 +1,87 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  markdown-lint:
+    name: Markdown lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: DavidAnson/markdownlint-cli2-action@v19
+        with:
+          globs: "**/*.md"
+          config: ".markdownlint.jsonc"
+          fix: false
+
+  validate-manifests:
+    name: Validate k8s manifests & helm charts
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install kubeconform + helm
+        run: |
+          set -euo pipefail
+          curl -sL https://github.com/yannh/kubeconform/releases/latest/download/kubeconform-linux-amd64.tar.gz | tar xz -C /tmp
+          sudo install /tmp/kubeconform /usr/local/bin/kubeconform
+          curl -fsSL https://get.helm.sh/helm-v3.17.0-linux-amd64.tar.gz | tar xz -C /tmp
+          sudo install /tmp/linux-amd64/helm /usr/local/bin/helm
+          kubeconform -v
+          helm version --short
+
+      - name: kubeconform (all standalone YAML)
+        run: |
+          set -euo pipefail
+          mapfile -t files < <(find . -type f \( -name '*.yaml' -o -name '*.yml' \) \
+            -not -path './.github/*' \
+            -not -path '*/charts/*' \
+            -not -path '*/.terraform/*')
+          if [ "${#files[@]}" -eq 0 ]; then echo "no standalone manifests found"; exit 0; fi
+          for f in "${files[@]}"; do
+            echo "::group::kubeconform $f"
+            kubeconform -strict -summary "$f"
+            echo "::endgroup::"
+          done
+
+      - name: helm lint
+        run: |
+          set -euo pipefail
+          mapfile -t charts < <(find . -name Chart.yaml -not -path '*/node_modules/*')
+          if [ "${#charts[@]}" -eq 0 ]; then echo "no charts found"; exit 0; fi
+          for c in "${charts[@]}"; do
+            echo "::group::helm lint $(dirname "$c")"
+            helm lint "$(dirname "$c")"
+            echo "::endgroup::"
+          done
+
+  terraform:
+    name: Terraform fmt + validate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.9"
+
+      - name: terraform fmt -check
+        run: terraform fmt -check -recursive
+
+      - name: terraform validate (per module)
+        run: |
+          set -euo pipefail
+          mapfile -t dirs < <(find . -name '*.tf' -exec dirname {} \; | sort -u)
+          if [ "${#dirs[@]}" -eq 0 ]; then echo "no terraform configs found"; exit 0; fi
+          for d in "${dirs[@]}"; do
+            echo "::group::terraform validate $d"
+            (cd "$d" && terraform init -backend=false -input=false >/dev/null && terraform validate)
+            echo "::endgroup::"
+          done

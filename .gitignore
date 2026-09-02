@@ -1,0 +1,23 @@
+# Terraform
+**/.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+
+# Local cluster artifacts
+*.kubeconfig
+clusters/kind/kubeconfig
+
+# Secrets / environment
+.env
+*.env
+!*.env.example
+
+# OS / editor
+.DS_Store
+*.swp
+.idea/
+.vscode/
+
+# Grok / agent scratch
+.grok/
