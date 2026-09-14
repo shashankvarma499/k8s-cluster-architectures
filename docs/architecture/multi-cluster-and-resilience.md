@@ -53,6 +53,15 @@ Cluster Mesh moves packets. It does not create clusters, push add-on versions, o
 | [Rancher Fleet](https://fleet.rancher.io/) | GitOps to many clusters | Rancher is already the pane |
 | Argo CD ApplicationSets / Flux Cluster generators | GitOps to many kubeconfigs | You already picked a GitOps tool |
 
+[Karmada](https://karmada.io/) **graduated from the CNCF on 8 September 2026**
+([announcement](https://www.cncf.io/announcements/2026/09/07/cloud-native-computing-foundation-announces-karmada-graduation/)),
+having moved from Sandbox (2021) to Incubating (2023) and now to Graduated. The
+v1.19 release promotes priority-based scheduling to beta (on by default) and
+advances multi-component scheduling for distributed AI training; the roadmap
+targets multi-cluster DRA across GPUs. For teams stretching GPU capacity or
+workload placement across a fleet, Karmada is now a first-class default rather
+than a "the Chinese cloud vendors use it" niche.
+
 A payments platform typically wants: **CAPI or the cloud API** to exist the cluster, **Argo CD ApplicationSets** to configure it, **Cilium Cluster Mesh** only if active-active L4 failover is a documented RTO tactic.
 
 ### Velero (backup / DR)
