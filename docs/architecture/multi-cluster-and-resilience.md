@@ -62,6 +62,12 @@ targets multi-cluster DRA across GPUs. For teams stretching GPU capacity or
 workload placement across a fleet, Karmada is now a first-class default rather
 than a "the Chinese cloud vendors use it" niche.
 
+For teams that prefer **DNS-based** global load balancing over (or before)
+Cluster Mesh, [k8gb](https://www.k8gb.io/) became a CNCF **incubating** project
+on 5 August 2026
+([announcement](https://www.cncf.io/announcements/2026/08/05/k8gb-becomes-a-cncf-incubating-project/)) —
+CoreDNS-based GSLB that fails services across clusters via health-checked DNS.
+
 A payments platform typically wants: **CAPI or the cloud API** to exist the cluster, **Argo CD ApplicationSets** to configure it, **Cilium Cluster Mesh** only if active-active L4 failover is a documented RTO tactic.
 
 ### Velero (backup / DR)

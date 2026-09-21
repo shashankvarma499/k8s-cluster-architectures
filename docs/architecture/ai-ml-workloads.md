@@ -1,6 +1,6 @@
 # AI/ML workloads, DRA, Kueue, KubeVirt, and edge
 
-Kubernetes in 2026 is the default scheduler for GPU training, inference, and — increasingly — VMs that still wrap those stacks. The device-plugin era (`nvidia.com/gpu: 1` and hope) is being replaced by **Dynamic Resource Allocation (DRA)**. Batch fairness is **Kueue**. Gang scheduling is landing in core Kubernetes (beta in 1.37). VMs are **KubeVirt**. Edge is still **K3s** and **KubeEdge**.
+Kubernetes in 2026 is the default scheduler for GPU training, inference, and — increasingly — VMs that still wrap those stacks. The device-plugin era (`nvidia.com/gpu: 1` and hope) is being replaced by **Dynamic Resource Allocation (DRA)**. Batch fairness is **Kueue**. The ML-lifecycle standard is **Kubeflow** (CNCF-graduated, August 2026). Gang scheduling is landing in core Kubernetes (beta in 1.37). VMs are **KubeVirt**. Edge is still **K3s** and **KubeEdge**.
 
 Do not confuse these. DRA answers “which GPU, with which MIG slice, on which NUMA node.” Kueue answers “whose Job runs next when the GPUs are full.” The scheduler’s new Workload / PodGroup APIs answer “all-or-nothing placement so you do not deadlock 7 of 8 workers.”
 
@@ -57,6 +57,12 @@ flowchart TB
 
 HPA **scale-to-zero** (beta, default on in 1.37) helps idle inference: object/external metrics only, not CPU.
 
+### Kubeflow (CNCF-graduated)
+
+[Kubeflow](https://www.kubeflow.org/) is the Kubernetes-native platform for the whole ML lifecycle: notebooks, pipelines, training, fine-tuning, inference, and serving. It **graduated from the CNCF on 17 August 2026** ([announcement](https://www.cncf.io/announcements/2026/08/17/cncf-announces-kubeflows-graduation-solidifying-the-standard-for-cloud-native-ai-operations/)) after a third-party security audit and a formalized steering committee. The project reports 6,600+ contributors across 1,000+ organizations and production adopters including Bloomberg, NVIDIA, Red Hat, LinkedIn, and Spotify.
+
+2026 practice: **TrainJob** (Training Operator) for distributed training, **KServe** for model serving, with Kueue in front for quota and DRA underneath for device allocation. Kubeflow is the lifecycle/UX layer — it does not replace either. Graduation removes the last governance objection to building platform AI on it; treat Kubeflow as the batteries-included default and fall back to a composable stack (KServe standalone + Kueue + DRA) only when you want less surface area.
+
 ### KubeVirt
 
 [KubeVirt](https://kubevirt.io/) runs VMs as Pods (`VirtualMachine` / `VirtualMachineInstance`). It is a CNCF incubating project. **v1.9.0** supports Kubernetes 1.34–1.36 ([support matrix](https://github.com/kubevirt/sig-release/blob/main/releases/k8s-support-matrix.md)). Live migration, including decentralized live migration since v1.6, is real; **cross-cluster** live migration still depends on the network (EVPN/VXLAN and projects like OpenPERouter), not on a kubevirt.io magic flag.
@@ -77,6 +83,7 @@ Neither replaces DRA/Kueue in a GPU superpod. They *are* how you run a distilled
 | Allocate specific GPUs / MIG / NICs with CEL | DRA + vendor driver |
 | Fair share of a GPU cluster among teams | Kueue ClusterQueues |
 | All-or-nothing multi-Pod training | Gang scheduling (1.37 beta) + Kueue |
+| Standardize the ML lifecycle (notebooks → training → serving) | Kubeflow TrainJob + KServe (CNCF-graduated Aug 2026) |
 | Burst to another cluster’s idle GPUs | MultiKueue |
 | Rack/block locality for NCCL | Kueue TAS + DRA NUMA attributes (`resource.kubernetes.io/numaNode`, stable in 1.37) |
 | Run a VM on the same cluster | KubeVirt |
@@ -90,6 +97,7 @@ Neither replaces DRA/Kueue in a GPU superpod. They *are* how you run a distilled
 - **Do not enable every DRA alpha feature** (CPU-via-DRA, compatibility groups) on a payments cluster that happens to have a T4 for fraud models. Stay on the stable DeviceClass / ResourceClaim path.
 - **Do not expect DRA preemption.** High-priority inference will sit Pending if a low-priority trainer holds the device. Use Kueue preemption or a dedicated inference NodePool.
 - **Do not use Kueue as a generic Deployment autoscaler.** It is for queued, finite (or at least admit-controlled) work. Use HPA/KEDA for request-driven services.
+- **Do not adopt all of Kubeflow for a single InferenceService.** KServe alone — or a plain Deployment with HPA scale-to-zero — is less machinery and fewer controllers to patch.
 - **Do not live-migrate KubeVirt VMs across clusters** without a network design. Same-cluster live migration is the supported default.
 - **Do not run K3s as your PCI production control plane** unless you have an HA etcd/Kine story and a patch process that matches your bank’s. K3s is excellent at the edge and in labs; it is not Autopilot.
 - **Do not mix device plugin and DRA for the same GPUs** without a migration plan. 1.37’s extended-resource-via-DRA exists so you can stop doing that.
@@ -109,7 +117,7 @@ Neither replaces DRA/Kueue in a GPU superpod. They *are* how you run a distilled
 ## Gotchas
 
 1. **ResourceClaim namespace.** Claims are namespaced. A platform DeviceClass is cluster-scoped. Tenants should not be able to create DeviceClasses that select someone else’s branded GPUs; RBAC the CRDs.
-2. **CDI and runtime.** DRA attaches devices through the Container Device Interface. containerd must be new enough; kind/k3s versions lag cloud AMIs.
+2. **CDI and runtime.** DRA attaches devices through the Container Device Interface. containerd must be new enough; kind/k3s versions lag cloud AMIs. containerd 1.7 exits extended support in September 2026 ([releases page](https://containerd.io/releases/)) — ship containerd 2.x in new GPU node images.
 3. **Topology Manager vs DRA.** Topology Manager still exists for CPU/memory pinning. DRA has its own NUMA attribute. 1.37’s pod-level resource managers (beta, **off** by default) and DRA derived attributes (alpha) are how these meet. Do not enable both experimental paths in production without a topology lab.
 4. **Kueue + Cluster Autoscaler / Karpenter.** If Kueue has not admitted the Job, there is no unschedulable Pod, so Karpenter will not scale. That is usually what you want (quota first). For “always have a warm GPU node,” run a separate provisioner or a dummy admitted placeholder.
 5. **MultiKueue and secrets.** Dispatching a Job to a worker cluster copies spec, not your cloud credentials. Inject identity on the worker (IRSA / Workload Identity), not in the Job YAML.
@@ -133,6 +141,7 @@ Neither replaces DRA/Kueue in a GPU superpod. They *are* how you run a distilled
 - [Kubernetes v1.37 release](https://kubernetes.io/blog/2026/08/26/kubernetes-v1-37-release/)
 - [GKE: DRA for device management](https://cloud.google.com/blog/products/containers-kubernetes/kubernetes-device-management-with-dra-dynamic-resource-allocation/)
 - [Kueue](https://github.com/kubernetes-sigs/kueue)
+- [Kubeflow CNCF graduation](https://www.cncf.io/announcements/2026/08/17/cncf-announces-kubeflows-graduation-solidifying-the-standard-for-cloud-native-ai-operations/) and [Kubeflow graduation blog](https://blog.kubeflow.org/graduation/)
 - [KubeVirt](https://kubevirt.io/) and [K8s support matrix](https://github.com/kubevirt/sig-release/blob/main/releases/k8s-support-matrix.md)
 - [K3s releases](https://github.com/k3s-io/k3s/releases)
 - [KubeEdge](https://kubeedge.io/)
