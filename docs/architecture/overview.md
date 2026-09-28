@@ -2,7 +2,7 @@
 
 Kubernetes in 2026 is no longer “a cluster plus a CNI plus Helm.” A production platform is a **stack of specialized controllers** that together own node lifecycle, networking, policy, delivery, and recovery. The control plane is still kube-apiserver / etcd / scheduler / controller-manager, but almost every interesting operational property now lives *around* that core: Cluster API or a managed Kubernetes service for cluster lifecycle, Karpenter or an Autopilot-style node pool for compute, Cilium for eBPF networking, Gateway API for north-south traffic, GitOps for desired state, and DRA for GPUs.
 
-This document is the map. The sibling deep-dives go into each layer. Facts below reflect the ecosystem as of September 2026: Kubernetes [v1.37.0 “Garhwal”](https://kubernetes.io/blog/2026/08/26/kubernetes-v1-37-release/) (released 26 August 2026) is current, with [1.37 / 1.36 / 1.35](https://kubernetes.io/releases/) on the supported release branches.
+This document is the map. The sibling deep-dives go into each layer. Facts below reflect the ecosystem as of September 2026: Kubernetes [v1.37 “Garhwal”](https://kubernetes.io/blog/2026/08/26/kubernetes-v1-37-release/) (released 26 August 2026; current patch **v1.37.1**) is current, with [1.37 / 1.36 / 1.35](https://kubernetes.io/releases/) on the supported release branches.
 
 ## What this series covers
 
@@ -33,7 +33,7 @@ There is no single correct vendor, but there *is* a coherent default for a new p
 
 | Concern | Default | When to deviate |
 | --- | --- | --- |
-| Kubernetes version | Latest *supported* minor on your cloud (today: 1.36 on most managed services; 1.37 just shipped) | Stay on N-1 until add-ons (Cilium, Karpenter, CSI) list 1.37 |
+| Kubernetes version | Latest *supported* minor on your cloud (today: 1.36 on most managed services; upstream 1.37.1 shipped 23 Sep) | Stay on N-1 until add-ons (Cilium, Karpenter, CSI) list 1.37 |
 | Cluster lifecycle | Managed control plane (EKS / GKE / AKS) **or** [Cluster API](https://cluster-api.sigs.k8s.io/) if you need multi-cloud / on-prem fleets | kubeadm by hand only for labs |
 | Node lifecycle | [Karpenter](https://karpenter.sh/) (AWS) or Autopilot / Auto Mode | Cluster Autoscaler if you need multi-cloud node-group semantics or reserved capacity pinned to ASGs |
 | CNI | [Cilium](https://cilium.io/) (eBPF, NetworkPolicy, Hubble, optional Gateway API) | Cloud-vendor CNI when the account already mandates it *and* you can still run Cilium in chaining/overlay mode |

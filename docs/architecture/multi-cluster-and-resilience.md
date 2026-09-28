@@ -72,7 +72,17 @@ A payments platform typically wants: **CAPI or the cloud API** to exist the clus
 
 ### Velero (backup / DR)
 
-[Velero](https://velero.io/) backups Kubernetes objects to object storage and volume data via **CSI snapshots** or **File System Backup** (node-agent, formerly restic/kopia). [Velero 1.18](https://github.com/vmware-tanzu/velero) is tested on Kubernetes 1.33–1.35 (the project lists expected compatibility as 1.18–latest; always check the matrix for 1.36/1.37).
+[Velero](https://velero.io/) backups Kubernetes objects to object storage and volume data via **CSI snapshots** or **File System Backup** (node-agent, formerly restic/kopia). [Velero 1.18](https://github.com/velero-io/velero) is tested on Kubernetes 1.33–1.35 (the project lists expected compatibility as 1.18–latest; always check the matrix for 1.36/1.37).
+
+Since early 2026 Velero has been a **CNCF Sandbox project**: Broadcom (which
+inherited it via VMware's acquisition of Heptio) donated the code, the
+repository moved from `vmware-tanzu/velero` to the neutral
+[`velero-io` GitHub organization](https://github.com/velero-io/velero), and
+maintainers now span Broadcom, Red Hat, and Microsoft
+([announcement](https://velero.io/blog/velero-joins-cncf-sandbox/)). For a
+backup layer a platform may depend on for a decade, vendor-neutral governance
+removes the single-vendor roadmap risk that was Velero's main liability —
+planning around Velero for DR no longer carries that caveat.
 
 | Method | Crash-consistent | Works for | Notes |
 | --- | --- | --- | --- |

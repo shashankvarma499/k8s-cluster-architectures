@@ -5,6 +5,36 @@ Kubernetes clusters are built. Each entry points at the primary source; the
 deep-dive for that layer (and, where warranted, a fintech-payments ADR) is
 updated in the same commit. Entries are appended newest-first.
 
+## 2026-09-28 — Kubernetes 1.37.1 ships; Velero's CNCF move (backfill); Kueue v0.20 RC
+
+- **Kubernetes v1.37.1** was released on 23 September 2026
+  ([GitHub release](https://github.com/kubernetes/kubernetes/releases/tag/v1.37.1),
+  [patch-releases page](https://kubernetes.io/releases/patch-releases/)),
+  alongside **v1.36.5, v1.35.9, and v1.34.12** for the older supported
+  branches. `dl.k8s.io/release/stable-1.37.txt` now resolves to v1.37.1.
+  Notable fix: a **v1.34+ regression** handling containers whose environment
+  values come from Secret objects containing binary non-UTF-8 data
+  ([changelog](https://github.com/kubernetes/kubernetes/blob/master/CHANGELOG/CHANGELOG-1.37.md)).
+  The first patch is the gate several managed offerings wait for before
+  enabling a new minor (EKS historically ships a minor only after its first
+  patch), so expect 1.37 rollout on managed services to accelerate.
+- **Velero joined the CNCF as a Sandbox project** (backfill): the CNCF TOC
+  accepted the application and the move was announced at KubeCon +
+  CloudNativeCon Europe 2026 in Amsterdam
+  ([Velero blog](https://velero.io/blog/velero-joins-cncf-sandbox/),
+  [CNCF news](https://www.cncf.io/news/2026/04/02/the-new-stack-why-broadcom-gave-velero-to-the-cncf-sandbox-and-what-it-means-for-kubernetes-data-protection/)).
+  Broadcom (which inherited Velero via the VMware acquisition of Heptio)
+  donated the project; the repository moved from `vmware-tanzu/velero` to the
+  neutral [`velero-io` GitHub organization](https://github.com/velero-io/velero),
+  and maintainers now include Broadcom, Red Hat, and Microsoft. Velero reports
+  10,000+ GitHub stars and 500M+ Docker Hub pulls. Single-vendor governance
+  risk is now off the table for the de-facto default Kubernetes backup tool —
+  see [multi-cluster-and-resilience.md](multi-cluster-and-resilience.md).
+  Current line: **v1.18.4** (2026-09-28; v1.18.3 on 2026-09-21).
+- **Kueue v0.20.0-rc.1** was published on 24 September 2026
+  ([GitHub release](https://github.com/kubernetes-sigs/kueue/releases/tag/v0.20.0-rc.1)).
+  GA of the v0.20 line is imminent; v0.19.x remains the stable line until then.
+
 ## 2026-09-21 — Argo CD 3.6 RC1 ships; Kubernetes 1.37.1 slips; containerd 1.7 leaves support
 
 - **Argo CD v3.6.0-rc1** was released on 16 September 2026
@@ -34,24 +64,6 @@ updated in the same commit. Entries are appended newest-first.
   ([analysis](https://dev.to/ntctech/the-kubernetes-137-deadline-that-doesnt-exist-and-the-one-that-does-1417)) —
   but plan the move to a containerd 2.x LTS line before your next node-image
   refresh.
-
-## 2026-08-17 — Kubeflow graduates from the CNCF (backfilled 2026-09-21)
-
-- **Kubeflow graduated from the CNCF** on 17 August 2026
-  ([CNCF announcement](https://www.cncf.io/announcements/2026/08/17/cncf-announces-kubeflows-graduation-solidifying-the-standard-for-cloud-native-ai-operations/),
-  [Kubeflow blog](https://blog.kubeflow.org/graduation/)). The Kubernetes-native
-  ML platform reports 6,600+ contributors across 1,000+ organizations, 33,000+
-  GitHub stars, ~260M PyPI downloads of its Python packages, and named adopters
-  including Bloomberg, NVIDIA, Red Hat, LinkedIn, and Spotify. Graduation
-  required a third-party security audit and a formalized steering committee.
-  With DRA stable (1.34+) and gang scheduling beta (1.37) in core, the 2026
-  "Kubernetes-native AI platform" stack now has every layer CNCF-sanctioned.
-  See [ai-ml-workloads.md](ai-ml-workloads.md).
-- **k8gb** — DNS-based global service load balancing for Kubernetes — **became
-  a CNCF incubating project** on 5 August 2026
-  ([announcement](https://www.cncf.io/announcements/2026/08/05/k8gb-becomes-a-cncf-incubating-project/)).
-  Relevant to cross-region failover designs that prefer DNS over Cluster Mesh;
-  see [multi-cluster-and-resilience.md](multi-cluster-and-resilience.md).
 
 ## 2026-09-14 — Karmada graduates CNCF; multi-cluster scheduling for AI goes production-grade
 
@@ -84,3 +96,21 @@ updated in the same commit. Entries are appended newest-first.
 - **Cilium 1.21** is in pre-release (`v1.21.0-pre.2`); the changelog already
   shows AWS managed prefix-list support in Cilium policies. No stable release
   yet — do not upgrade production to a pre-release.
+
+## 2026-08-17 — Kubeflow graduates from the CNCF (backfilled 2026-09-21)
+
+- **Kubeflow graduated from the CNCF** on 17 August 2026
+  ([CNCF announcement](https://www.cncf.io/announcements/2026/08/17/cncf-announces-kubeflows-graduation-solidifying-the-standard-for-cloud-native-ai-operations/),
+  [Kubeflow blog](https://blog.kubeflow.org/graduation/)). The Kubernetes-native
+  ML platform reports 6,600+ contributors across 1,000+ organizations, 33,000+
+  GitHub stars, ~260M PyPI downloads of its Python packages, and named adopters
+  including Bloomberg, NVIDIA, Red Hat, LinkedIn, and Spotify. Graduation
+  required a third-party security audit and a formalized steering committee.
+  With DRA stable (1.34+) and gang scheduling beta (1.37) in core, the 2026
+  "Kubernetes-native AI platform" stack now has every layer CNCF-sanctioned.
+  See [ai-ml-workloads.md](ai-ml-workloads.md).
+- **k8gb** — DNS-based global service load balancing for Kubernetes — **became
+  a CNCF incubating project** on 5 August 2026
+  ([announcement](https://www.cncf.io/announcements/2026/08/05/k8gb-becomes-a-cncf-incubating-project/)).
+  Relevant to cross-region failover designs that prefer DNS over Cluster Mesh;
+  see [multi-cluster-and-resilience.md](multi-cluster-and-resilience.md).
