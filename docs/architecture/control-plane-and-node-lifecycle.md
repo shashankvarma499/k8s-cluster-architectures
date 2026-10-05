@@ -2,7 +2,7 @@
 
 Cluster lifecycle in 2026 is split in two: **who owns the control plane**, and **who owns the machines that run Pods**. Cluster API (CAPI) is the portable language for the first. Karpenter (or an Autopilot-style managed node pool) is the default answer to the second on public cloud. Cluster Autoscaler is still the right tool when you need node-*group* semantics across clouds.
 
-As of September 2026: [Cluster API v1.14.1](https://github.com/kubernetes-sigs/cluster-api/releases) is current (management clusters Kubernetes 1.33–1.37, workload clusters 1.31–1.37). [Karpenter AWS provider v1.14.1](https://github.com/aws/karpenter-provider-aws/releases) is the LTS line, with the `karpenter.sh/v1` NodePool API that has been stable since Karpenter 1.0. AWS documents [EKS Auto Mode](https://docs.aws.amazon.com/eks/latest/best-practices/automode.html) as the recommended successor to self-managed Karpenter *and* to EKS Fargate for most new clusters. GKE Autopilot remains Google’s equivalent managed data plane.
+As of September 2026: [Cluster API v1.14.2](https://github.com/kubernetes-sigs/cluster-api/releases) is current (management clusters Kubernetes 1.33–1.37, workload clusters 1.31–1.37). [Karpenter AWS provider v1.14.1](https://github.com/aws/karpenter-provider-aws/releases) is the LTS line, with the `karpenter.sh/v1` NodePool API that has been stable since Karpenter 1.0. AWS documents [EKS Auto Mode](https://docs.aws.amazon.com/eks/latest/best-practices/automode.html) as the recommended successor to self-managed Karpenter *and* to EKS Fargate for most new clusters. GKE Autopilot remains Google’s equivalent managed data plane.
 
 ## What it is
 

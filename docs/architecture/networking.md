@@ -5,7 +5,7 @@ Cluster networking in 2026 has three layers that used to be sold as separate pro
 Two calendar facts dominate this layer:
 
 - The community [ingress-nginx controller retired in March 2026](https://kubernetes.io/blog/2025/11/11/ingress-nginx-retirement/). Existing Deployments still route traffic; they will never get another CVE patch.
-- [Istio ambient mode](https://www.cncf.io/blog/2024/11/07/fast-secure-and-simple-istios-ambient-mode-reaches-general-availability-in-v1-24/) has been **GA since Istio 1.24** (November 2024). Current Istio is [1.31.0](https://istio.io/latest/news/releases/1.31.x/announcing-1.31/) (31 August 2026). Cilium 1.20 (July 2026) ships Gateway API 1.6.1 support.
+- [Istio ambient mode](https://www.cncf.io/blog/2024/11/07/fast-secure-and-simple-istios-ambient-mode-reaches-general-availability-in-v1-24/) has been **GA since Istio 1.24** (November 2024). Current Istio is [1.31.1](https://istio.io/latest/news/releases/1.31.x/announcing-1.31/) (1.31.0 on 31 August 2026; 1.31.1 patch on 21 September). Cilium 1.20 (July 2026) ships Gateway API 1.6.1 support; **Cilium 1.21 is still pre-release** (v1.21.0-pre.3, 2 October 2026) — do not upgrade production to it.
 
 ## What it is
 

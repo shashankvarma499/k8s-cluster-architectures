@@ -5,6 +5,57 @@ Kubernetes clusters are built. Each entry points at the primary source; the
 deep-dive for that layer (and, where warranted, a fintech-payments ADR) is
 updated in the same commit. Entries are appended newest-first.
 
+## 2026-10-05 — Kueue v0.20 GA; Kubernetes 1.38 cycle opens; Argo CD 4.0 visioning starts
+
+- **Kueue v0.20.0** was released on 30 September 2026
+  ([GitHub release](https://github.com/kubernetes-sigs/kueue/releases/tag/v0.20.0);
+  v0.19.7 and v0.18.11 shipped the same day). This is a breaking release: the
+  `kueue.x-k8s.io/v1beta1` API is **removed** — v1beta2 is the only served
+  version, and upstream provides a
+  [migration script](https://raw.githubusercontent.com/kubernetes-sigs/kueue/main/hack/migrate-to-v1beta2.sh).
+  Headline changes:
+  - **DRA feasibility checking** — the `KueueDRADeviceFeasibility` gate
+    (Alpha, off by default) makes Kueue check per-node device availability
+    before admitting a Workload that uses ResourceClaimTemplates, so quota is
+    no longer reserved for Workloads the kube-scheduler cannot place.
+  - **AdmissionFairSharingAnchorAtQuotaReservation** and
+    **WorkloadPriorityClassDefaulting** both graduate to Beta (on by default);
+    the latter auto-assigns the default WorkloadPriorityClass to workloads
+    that do not specify one.
+  - KubeRay v1.7 History Server options in MultiKueue; collector-sidecar
+    resource accounting in Ray quotas; a LeaderWorkerSet quota-bypass fix
+    behind the new `LWSImmutableGroupSize` gate (Beta); KueueViz RBAC checks
+    via SubjectAccessReview.
+  - See [ai-ml-workloads.md](ai-ml-workloads.md).
+- **Kubernetes v1.38.0-alpha.1** was tagged on 23 September 2026 (GitHub
+  release published 29 September), opening the 1.38 cycle
+  ([sig-release schedule](https://git.k8s.io/sig-release/releases/release-1.38/README.md)):
+  Enhancements Freeze passed on 30 September, Code/Test Freeze lands 16–17
+  November, and **GA is 16 December 2026**. `dl.k8s.io/release/stable-1.37.txt`
+  still resolves to v1.37.1; 1.37 remains the stable line until then.
+- **Argo CD 4.0 visioning has begun.** The CNCF's ArgoCon NA preview
+  (30 September 2026,
+  [CNCF blog](https://www.cncf.io/blog/2026/09/30/argocon-north-america-2026-what-to-expect-as-the-argo-community-looks-toward-cd-4-0/))
+  reports accelerating work across the Argo projects and the start of the
+  community visioning process for Argo CD 4.0. ArgoCon NA is co-located with
+  **KubeCon + CloudNativeCon NA (9–12 November 2026, Salt Lake City)**; Argo
+  CD 3.6 GA remains targeted for 3 November 2026. See
+  [gitops-and-delivery.md](gitops-and-delivery.md).
+- **Cilium v1.21.0-pre.3** shipped 2 October 2026
+  ([release](https://github.com/cilium/cilium/releases/tag/v1.21.0-pre.3)),
+  adding the `lbipam.cilium.io/sharing-permit-different-pods` LB IPAM
+  annotation so Services with `externalTrafficPolicy=Local` can share an IP
+  when they select different Pods. Still pre-release; the stable line remains
+  1.20 (v1.20.2, 16 September 2026). Do not upgrade production.
+- **Karpenter v1.15** (the next quarterly minor after the v1.14 LTS) is in
+  development — the AWS provider repo already documents the `spec.kubelet`
+  validation changes shipping in v1.15.0
+  ([PR #9656](https://github.com/aws/karpenter-provider-aws/pull/9656)).
+- **Cluster API v1.14.2** (8 September 2026) is current (backfill; the docs
+  previously pinned v1.14.1). The patch adds a `--tls-curve-preferences`
+  manager flag plus KCP/ClusterClass fixes
+  ([release](https://github.com/kubernetes-sigs/cluster-api/releases/tag/v1.14.2)).
+
 ## 2026-09-28 — Kubernetes 1.37.1 ships; Velero's CNCF move (backfill); Kueue v0.20 RC
 
 - **Kubernetes v1.37.1** was released on 23 September 2026

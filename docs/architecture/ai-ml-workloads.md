@@ -38,7 +38,7 @@ flowchart LR
 
 [Kueue](https://kueue.sigs.k8s.io/) is SIG-Scheduling’s Kubernetes-native job queue. It admits Workloads into **ClusterQueues** (quota, flavors, preemption) and **LocalQueues** (namespace-facing). It understands Job, JobSet, MPIJob, RayJob, PyTorchJob, and plain Pods.
 
-Current release on the project README: **v0.19.2**, tested on Kubernetes **1.34+**. v0.19 started aligning with upstream Workload-Aware Scheduling (WAS). 2026 roadmap items include MultiKueue UX, topology-aware scheduling (TAS) elastic workloads, and integration with the in-tree WAS/PodGroup APIs.
+Current release: **v0.20.0** (30 September 2026), tested on Kubernetes **1.34+**. v0.20 is a breaking release: the `kueue.x-k8s.io/v1beta1` API is removed (v1beta2 only — run upstream's [migration script](https://raw.githubusercontent.com/kubernetes-sigs/kueue/main/hack/migrate-to-v1beta2.sh) first). It adds per-node **DRA device feasibility checks** (`KueueDRADeviceFeasibility`, Alpha) so quota is not reserved for Workloads the kube-scheduler cannot place, and promotes `AdmissionFairSharingAnchorAtQuotaReservation` and `WorkloadPriorityClassDefaulting` to Beta (on by default). 2026 roadmap items include MultiKueue UX, topology-aware scheduling (TAS) elastic workloads, and integration with the in-tree WAS/PodGroup APIs.
 
 **MultiKueue** dispatches a Job to a worker cluster that has quota. **Topology-Aware Scheduling** places tightly coupled workers on the same rack/block so GPU-GPU fabrics (NVLink, InfiniBand) actually work.
 

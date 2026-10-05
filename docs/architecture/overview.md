@@ -154,7 +154,7 @@ Zone-aware Services (`spec.trafficDistribution: PreferSameZone`, GA since 1.33 a
 
 ## Gotchas that bite new platforms
 
-1. **Version skew is the real SLA.** Cluster API v1.14.1 supports management clusters 1.33–1.37 and workload clusters 1.31–1.37 ([version book](https://cluster-api.sigs.k8s.io/reference/versions.html)). Cilium 1.20 tracks Kubernetes 1.36 and Gateway API 1.6.1. Karpenter 1.14 lists Kubernetes 1.29–1.36. A “we upgraded the control plane on Tuesday” without checking add-on matrices is how clusters go dark.
+1. **Version skew is the real SLA.** Cluster API v1.14.2 supports management clusters 1.33–1.37 and workload clusters 1.31–1.37 ([version book](https://cluster-api.sigs.k8s.io/reference/versions.html)). Cilium 1.20 tracks Kubernetes 1.36 and Gateway API 1.6.1. Karpenter 1.14 lists Kubernetes 1.29–1.36. A “we upgraded the control plane on Tuesday” without checking add-on matrices is how clusters go dark.
 2. **ingress-nginx is unmaintained.** Existing Deployments still route packets. They will not get CVE patches. Gateway API is the portable replacement; Cilium, kgateway, NGINX Gateway Fabric, Traefik, GKE Gateway, and Istio all have [v1.6 conformance reports](https://kubernetes.io/blog/2026/08/03/gateway-api-v1-6-release/).
 3. **Namespaces are not a security boundary for untrusted code.** Combine PSA, NetworkPolicy, and quota for *trusted* multi-tenancy. Use vCluster private nodes or separate clusters for anything that looks like a customer.
 4. **Device plugins and DRA can double-count.** Kubernetes 1.37’s extended-resource-via-DRA path is the migration off device plugins. Running both for the same GPU without a plan wastes capacity or fails scheduling.
