@@ -2,6 +2,9 @@
 
 - Status: Accepted
 - Date: 2026-09-02
+- Amended: 2026-10-12 — version pin superseded by
+  [ADR 0013](0013-argocd-security-hardening.md) (Argo CD ≥ 3.5.4; platform
+  pinned to 3.5.5 after the October 2026 advisory batch)
 
 ## Context
 

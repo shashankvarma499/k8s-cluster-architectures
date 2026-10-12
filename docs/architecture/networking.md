@@ -5,7 +5,7 @@ Cluster networking in 2026 has three layers that used to be sold as separate pro
 Two calendar facts dominate this layer:
 
 - The community [ingress-nginx controller retired in March 2026](https://kubernetes.io/blog/2025/11/11/ingress-nginx-retirement/). Existing Deployments still route traffic; they will never get another CVE patch.
-- [Istio ambient mode](https://www.cncf.io/blog/2024/11/07/fast-secure-and-simple-istios-ambient-mode-reaches-general-availability-in-v1-24/) has been **GA since Istio 1.24** (November 2024). Current Istio is [1.31.1](https://istio.io/latest/news/releases/1.31.x/announcing-1.31/) (1.31.0 on 31 August 2026; 1.31.1 patch on 21 September). Cilium 1.20 (July 2026) ships Gateway API 1.6.1 support; **Cilium 1.21 is still pre-release** (v1.21.0-pre.3, 2 October 2026) — do not upgrade production to it.
+- [Istio ambient mode](https://www.cncf.io/blog/2024/11/07/fast-secure-and-simple-istios-ambient-mode-reaches-general-availability-in-v1-24/) has been **GA since Istio 1.24** (November 2024). Current Istio is [1.31.1](https://istio.io/latest/news/releases/1.31.x/announcing-1.31.1/) (1.31.0 on 31 August 2026; 1.31.1 security patch on 21 September fixes [ISTIO-SECURITY-2026-006](https://istio.io/latest/news/security/istio-security-2026-006/) — 13 Envoy/Istio CVEs including a BackendTLSPolicy fail-open on sidecars; 1.30.5 and 1.29.8 carry the same fixes). Cilium 1.20 (July 2026) ships Gateway API 1.6.1 support; **Cilium 1.21 is still pre-release** (v1.21.0-pre.3, 2 October 2026) — do not upgrade production to it.
 
 ## What it is
 
@@ -50,6 +50,17 @@ flowchart LR
 | ListenerSet | GA | Extra listeners without rewriting the Gateway |
 
 Experimental resources now live in `gateway.networking.x-k8s.io` with an `X` prefix (e.g. `XBackend`). Do not put those in a PCI workload.
+
+**Gateway API v1.7** (RC1 8 October 2026,
+[release](https://github.com/kubernetes-sigs/gateway-api/releases/tag/v1.7.0-rc.1))
+promotes **HTTPRoute retries (GEP-1731)** — `codes`, `attempts`, `backoff` —
+to the Standard channel. The Experimental channel adds per-address Gateway
+routability (GEP-5093), an OpenTelemetry-based standardized attribute
+dictionary (GEP-5253), session persistence moved to `XBackend`
+(GEP-1619/4894), pre-routing listener filters (GEP-5224),
+ClusterTrustBundle in `caCertificateRefs` (GEP-5075), and an
+`XTelemetryPolicy` for distributed tracing (GEP-4768). Production clusters
+stay on the v1.6 Standard channel (v1.6.3 is the current patch).
 
 GAMMA (mesh) has been Standard since Gateway API v1.1.0: you attach HTTPRoutes to Services instead of Gateways, and the mesh datapath honors them. Istio and Cilium both implement this.
 

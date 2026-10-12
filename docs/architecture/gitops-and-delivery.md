@@ -2,7 +2,7 @@
 
 Delivery in 2026 is Git (or OCI) as the desired state, a reconciler that makes the cluster match, a **progressive** rollout that can abort on SLOs, and a cost/autoscaling loop that keeps the nodes you just provisioned honest.
 
-The two CNCF-graduated reconcilers are [Argo CD](https://argo-cd.readthedocs.io/) **3.5.3** (14 September 2026) and [Flux](https://fluxcd.io/) **2.9.5** (31 August 2026). Progressive delivery on the Argo side is [Argo Rollouts](https://argoproj.github.io/rollouts/) **v1.9.1**. Event-driven scale is [KEDA](https://keda.sh/) **2.20.x**. Cost is [OpenCost](https://www.opencost.io/) (CNCF incubating; 1.121 added inference cost tracking) and the commercial [Kubecost](https://www.kubecost.com/) product built on the same engine. Vertical rightsizing is still [VPA](https://github.com/kubernetes/autoscaler/tree/master/vertical-pod-autoscaler), now sitting next to **stable in-place Pod resize**.
+The two CNCF-graduated reconcilers are [Argo CD](https://argo-cd.readthedocs.io/) **3.5.5** (12 October 2026; the 3.5.4 security patch on 6 October is mandatory — see below) and [Flux](https://fluxcd.io/) **2.9.5** (31 August 2026). Progressive delivery on the Argo side is [Argo Rollouts](https://argoproj.github.io/rollouts/) **v1.9.1**. Event-driven scale is [KEDA](https://keda.sh/) **2.20.x**. Cost is [OpenCost](https://www.opencost.io/) (CNCF incubating; 1.121 added inference cost tracking) and the commercial [Kubecost](https://www.kubecost.com/) product built on the same engine. Vertical rightsizing is still [VPA](https://github.com/kubernetes/autoscaler/tree/master/vertical-pod-autoscaler), now sitting next to **stable in-place Pod resize**.
 
 Policy-as-code is covered in depth in [security.md](security.md); this document only covers how it **gates delivery**.
 
@@ -28,7 +28,26 @@ Both watch Git/OCI and apply Kubernetes manifests. They differ in architecture a
 
 Argo CD 3.5 also graduates **Source Hydrator** (render in one repo, sync from another) to beta — useful when template authors and cluster-applied YAML must have different ACLs.
 
-Argo CD **3.6** targets GA on 3 November 2026 (3.6.0-rc1 shipped 16 September 2026). Beyond that, the community has started the **visioning process for Argo CD 4.0** ([CNCF blog, 30 September 2026](https://www.cncf.io/blog/2026/09/30/argocon-north-america-2026-what-to-expect-as-the-argo-community-looks-toward-cd-4-0/)); expect the direction to take shape at ArgoCon NA, co-located with KubeCon + CloudNativeCon NA (9–12 November 2026, Salt Lake City).
+Argo CD **3.6** targets GA on 3 November 2026 (3.6.0-rc2 shipped 6 October 2026). Beyond that, the community has started the **visioning process for Argo CD 4.0** ([CNCF blog, 30 September 2026](https://www.cncf.io/blog/2026/09/30/argocon-north-america-2026-what-to-expect-as-the-argo-community-looks-toward-cd-4-0/)); expect the direction to take shape at ArgoCon NA, co-located with KubeCon + CloudNativeCon NA (9–12 November 2026, Salt Lake City).
+
+**October 2026 advisory batch — patch before doing anything else.** On
+6 October 2026 the Argo project disclosed eight advisories, four CRITICAL:
+two repo-server command-execution paths (a Kustomize remote ref, and a
+Kustomize-rendered Helm `configHome`), a Jsonnet import that reads arbitrary
+repo-server files, and an AppProject restriction bypass via
+PreDelete/PostDelete resource hooks (**CVE-2026-77459**); two HIGH (login
+rate-limit bypass **CVE-2025-61560**, SSH proxy-URL command injection
+**CVE-2026-55797**); two MODERATE (extension-proxy RBAC namespace handling,
+OCI manifest memory exhaustion). Fixes: **3.6.0-rc2**, backported to
+**3.5.4 / 3.4.10 / 3.3.15** (bugfix patches 3.5.5 / 3.4.11 / 3.3.16 on
+12 October). Two hardening changes are potentially breaking: Kustomize
+builds that render Helm charts no longer honor `helmGlobals.configHome`
+(plugins registered there stop loading), and OCI manifests larger than
+**4 MiB are rejected**. The repo-server is the highest-value target in a
+GitOps deployment because it holds every repo credential; treat these fixes
+as an emergency patch, not a routine upgrade. See the
+[advisory index](https://github.com/argoproj/argo-cd/security/advisories)
+and [ADR 0013](../scenarios/fintech-payments/decisions/0013-argocd-security-hardening.md).
 
 ```mermaid
 flowchart LR

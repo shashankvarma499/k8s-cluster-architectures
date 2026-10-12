@@ -5,6 +5,90 @@ Kubernetes clusters are built. Each entry points at the primary source; the
 deep-dive for that layer (and, where warranted, a fintech-payments ADR) is
 updated in the same commit. Entries are appended newest-first.
 
+## 2026-10-12 — Argo CD security advisory batch (4 CRITICAL); Karpenter v1.15 GA; Gateway API v1.7 RC1
+
+- **Argo CD disclosed eight security advisories on 6 October 2026**, four
+  CRITICAL, fixed in **v3.6.0-rc2, v3.5.4, v3.4.10, and v3.3.15**
+  ([3.6.0-rc2 release notes](https://github.com/argoproj/argo-cd/releases/tag/v3.6.0-rc2)):
+  - CRITICAL: a Kustomize **remote ref** can run commands in the repo-server
+    ([GHSA-9v9p-x54c-58gc](https://github.com/argoproj/argo-cd/security/advisories/GHSA-9v9p-x54c-58gc));
+    a Kustomize **Helm config home** can run commands in the repo-server
+    ([GHSA-fw5c-w8rc-j7fx](https://github.com/argoproj/argo-cd/security/advisories/GHSA-fw5c-w8rc-j7fx));
+    a **Jsonnet import can read files** from the repo-server
+    ([GHSA-m3vr-7329-44ww](https://github.com/argoproj/argo-cd/security/advisories/GHSA-m3vr-7329-44ww));
+    **AppProject restrictions are bypassed** by PreDelete/PostDelete resource
+    hooks ([GHSA-fmxq-cgp8-87wp](https://github.com/argoproj/argo-cd/security/advisories/GHSA-fmxq-cgp8-87wp),
+    **CVE-2026-77459**).
+  - HIGH: login failure rate limit bypassable via concurrent requests
+    ([GHSA-4439-h7jw-5cjj](https://github.com/argoproj/argo-cd/security/advisories/GHSA-4439-h7jw-5cjj),
+    CVE-2025-61560); command injection via a repository proxy URL on SSH Git
+    remotes ([GHSA-j6cw-g6p4-7hch](https://github.com/argoproj/argo-cd/security/advisories/GHSA-j6cw-g6p4-7hch),
+    CVE-2026-55797). Two MODERATE: extension-proxy RBAC ignores the
+    application namespace with `applications-in-any-namespace` enabled, and
+    an oversized OCI manifest can exhaust repo-server memory.
+  - Two **potentially-breaking hardening changes** ship with the fixes:
+    Kustomize builds that render Helm charts no longer honor
+    `helmGlobals.configHome` (Helm plugins registered there stop loading),
+    and OCI manifests larger than **4 MiB are rejected**.
+  - Production guidance: upgrade to **3.5.4 / 3.4.10 / 3.3.15 or newer**
+    immediately; bugfix patches v3.5.5 / v3.4.11 / v3.3.16 followed on
+    12 October 2026. See [gitops-and-delivery.md](gitops-and-delivery.md)
+    and
+    [ADR 0013](../scenarios/fintech-payments/decisions/0013-argocd-security-hardening.md).
+- **Karpenter v1.15.0 GA'd on 10 October 2026**, one quarter after the v1.14
+  LTS line ([release](https://github.com/kubernetes-sigs/karpenter/releases/tag/v1.15.0);
+  [AWS provider v1.15.0](https://github.com/aws/karpenter-provider-aws/releases/tag/v1.15.0)
+  the same day). Headlines: **DRA prioritized alternatives** support; a new
+  **VPA prediction controller and store** (Karpenter's first step toward
+  predictive node scaling); default **pod topology spread awareness** when
+  bin-packing; accounting for **instance-type volume limits** at
+  provisioning time; node repair reclassified as **voluntary disruption**
+  with terminate-first drift for capacity-constrained NodePools; **reboot**
+  as a node action; a feature-gated pod deletion-cost controller; and new
+  disruption metrics (`karpenter_pods_disrupted_total`, `consolidation_policy`
+  and `termination_mode` labels). The upgrade guide graduates the **Capacity
+  Buffers API to v1beta1** (new `autoscaling.x-k8s.io` CRD — upgrade the
+  standalone `karpenter-crd` chart alongside the controller). See
+  [control-plane-and-node-lifecycle.md](control-plane-and-node-lifecycle.md).
+- **Gateway API v1.7.0-rc.1 shipped on 8 October 2026**
+  ([release](https://github.com/kubernetes-sigs/gateway-api/releases/tag/v1.7.0-rc.1),
+  alongside the v1.6.3 patch). **HTTPRoute Retries (GEP-1731)** — `codes`,
+  `attempts`, `backoff` — graduates to the **Standard channel**. New in
+  Experimental: per-address **Gateway Address Routability** (GEP-5093), a
+  **standardized attribute dictionary** based on OpenTelemetry semantics
+  (GEP-5253), session persistence moved to **XBackend** (GEP-1619/4894),
+  **pre-routing listener filters** (GEP-5224), **ClusterTrustBundle** support
+  in `caCertificateRefs` (GEP-5075), and the `XTelemetryPolicy`
+  distributed-tracing API (GEP-4768). See [networking.md](networking.md).
+- **Kubernetes v1.38.0-alpha.2** was published on 7 October 2026
+  ([release](https://github.com/kubernetes/kubernetes/releases/tag/v1.38.0-alpha.2));
+  `latest.txt` now resolves to it while `stable-1.37.txt` remains v1.37.1
+  (no new patch this week). The 1.38 cycle's headline security work is the
+  start of the **post-quantum migration**: ML-DSA (FIPS 204) support across
+  the control plane — **Beta** pod-certificate signing via
+  `PodCertificateRequest` and projected volumes, PKCS#10 CSR signing behind
+  the `CertificateSigningRequestMLDSA` feature gate, kubelet client/server
+  key-algorithm selection (ECDSA/RSA/ML-DSA), client-go ML-DSA keys via Go
+  1.27 `crypto/mldsa`, and kubeadm `ML-DSA-44/65/87` encryption algorithms
+  ([1.38 changelog](https://github.com/kubernetes/kubernetes/blob/master/CHANGELOG/CHANGELOG-1.38.md)).
+  See [security.md](security.md).
+- **Kueue v0.20.1 and v0.19.8** patches shipped on 8 October 2026
+  ([release](https://github.com/kubernetes-sigs/kueue/releases/tag/v0.20.1)),
+  the first patches after the breaking v0.20.0.
+- **KubeVirt v1.9.1** was tagged on 12 October 2026 — 83 changes including
+  libvirt 11.10.0, Windows crash-dump handling, and Vera Rubin GPU
+  passthrough recognition
+  ([release](https://github.com/kubevirt/kubevirt/releases/tag/v1.9.1)).
+  GitHub flags it pre-release at time of writing — verify before upgrading.
+- **Backfill — Istio 1.31.1** (21 September 2026) is a security release
+  fixing **ISTIO-SECURITY-2026-006**: 13 CVEs — Envoy heap use-after-free on
+  HTTP/2 trailers, a `safe_regex` negative-match **fail-open** in RBAC, a
+  QUIC HTTP/3 use-after-free, plus Istio fixes for an EnvoyFilter
+  control-plane DoS and a **BackendTLSPolicy fail-open on sidecars** (CVSS
+  7.7) ([advisory](https://istio.io/latest/news/security/istio-security-2026-006/)).
+  Patches: 1.31.1, 1.30.5, 1.29.8. The 1.32 dev cycle opened with
+  `1.32.0-alpha.0` on 5 October 2026. See [networking.md](networking.md).
+
 ## 2026-10-05 — Kueue v0.20 GA; Kubernetes 1.38 cycle opens; Argo CD 4.0 visioning starts
 
 - **Kueue v0.20.0** was released on 30 September 2026

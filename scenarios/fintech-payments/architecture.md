@@ -164,7 +164,7 @@ We do not use External Secrets Operator as the source of truth for CDE material:
 
 ## Delivery
 
-Argo CD **3.5.2** ([release](https://github.com/argoproj/argo-cd/releases/tag/v3.5.2)), Helm chart **10.6.4**, HA install. App-of-apps: one root `Application` (applied once from [`gitops/charts/bootstrap`](gitops/charts/bootstrap)) creates one child `Application` per service. AppProject `cde` may destinate only `cde-*` namespaces; AppProject `platform` destines the rest.
+Argo CD **3.5.5** ([release](https://github.com/argoproj/argo-cd/releases/tag/v3.5.5); minimum 3.5.4 — the October 2026 advisory fixes, see [ADR 0013](decisions/0013-argocd-security-hardening.md)), Helm chart **10.6.4** with `global.image.tag=v3.5.5`, HA install. App-of-apps: one root `Application` (applied once from [`gitops/charts/bootstrap`](gitops/charts/bootstrap)) creates one child `Application` per service. AppProject `cde` may destinate only `cde-*` namespaces; AppProject `platform` destines the rest.
 
 Argo Rollouts **1.9.1** ([release](https://github.com/argoproj/argo-rollouts/releases/tag/v1.9.1)) replaces Deployment on `payments-api` and `payments-gateway`. Canary weights 10 → 50 → 100 with Prometheus `AnalysisTemplate` on 5xx ratio. A failed analysis aborts. See [ADR 0005](decisions/0005-argo-rollouts-progressive-delivery.md).
 

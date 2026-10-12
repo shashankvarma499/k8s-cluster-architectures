@@ -2,7 +2,7 @@
 
 Cluster lifecycle in 2026 is split in two: **who owns the control plane**, and **who owns the machines that run Pods**. Cluster API (CAPI) is the portable language for the first. Karpenter (or an Autopilot-style managed node pool) is the default answer to the second on public cloud. Cluster Autoscaler is still the right tool when you need node-*group* semantics across clouds.
 
-As of September 2026: [Cluster API v1.14.2](https://github.com/kubernetes-sigs/cluster-api/releases) is current (management clusters Kubernetes 1.33–1.37, workload clusters 1.31–1.37). [Karpenter AWS provider v1.14.1](https://github.com/aws/karpenter-provider-aws/releases) is the LTS line, with the `karpenter.sh/v1` NodePool API that has been stable since Karpenter 1.0. AWS documents [EKS Auto Mode](https://docs.aws.amazon.com/eks/latest/best-practices/automode.html) as the recommended successor to self-managed Karpenter *and* to EKS Fargate for most new clusters. GKE Autopilot remains Google’s equivalent managed data plane.
+As of September 2026: [Cluster API v1.14.2](https://github.com/kubernetes-sigs/cluster-api/releases) is current (management clusters Kubernetes 1.33–1.37, workload clusters 1.31–1.37). [Karpenter v1.15.0](https://github.com/kubernetes-sigs/karpenter/releases) (10 October 2026) is the current quarterly minor; the AWS provider v1.14.x line remains the LTS, with the `karpenter.sh/v1` NodePool API that has been stable since Karpenter 1.0. AWS documents [EKS Auto Mode](https://docs.aws.amazon.com/eks/latest/best-practices/automode.html) as the recommended successor to self-managed Karpenter *and* to EKS Fargate for most new clusters. GKE Autopilot remains Google’s equivalent managed data plane.
 
 ## What it is
 
@@ -51,6 +51,27 @@ Both watch unschedulable Pods. They differ in *what they scale*.
 | API | Flags + group autoscaling | `NodePool` + cloud `NodeClass` (`EC2NodeClass` on AWS), `karpenter.sh/v1` |
 
 Karpenter’s model: the scheduler marks a Pod unschedulable → Karpenter computes a NodeClaim that satisfies the Pod (and as many siblings as will fit) → the cloud provider launches that instance → the node joins → the Pod binds. Consolidation continuously asks “is there a cheaper or smaller node that still fits?”.
+
+**Karpenter v1.15 (10 October 2026)** starts the move toward *predictive*
+node scaling and tighter disruption control
+([release](https://github.com/kubernetes-sigs/karpenter/releases/tag/v1.15.0),
+[upgrade guide](https://karpenter.sh/docs/upgrading/upgrade-guide/)):
+
+- A **VPA prediction controller and store** land in core — Karpenter can
+  learn workload vertical patterns instead of reacting purely to
+  unschedulable Pods.
+- **DRA prioritized alternatives** support, so GPU NodePools can declare a
+  ranked list of device alternatives rather than one exact claim.
+- Default **pod topology spread awareness** and **instance-type volume-limit
+  accounting** reduce bad bin-packing and EBS-attachment failures.
+- Disruption gets surgical: node repair is now classified as **voluntary
+  disruption** (respecting budgets), capacity-constrained NodePools get
+  **terminate-first drift**, and **reboot** joins replace/stop as a node
+  action. New metrics (`karpenter_pods_disrupted_total`, `consolidation_policy`
+  and `termination_mode` labels) make disruption decisions observable.
+- The **Capacity Buffers API graduates to v1beta1** with a new
+  `autoscaling.x-k8s.io` CRD — upgrade the standalone `karpenter-crd` chart
+  alongside the controller.
 
 ```mermaid
 sequenceDiagram
@@ -126,7 +147,7 @@ sequenceDiagram
 ## Current status and versions
 
 - **Cluster API:** v1.14.x standard support; v1.13.x standard; v1.12.x in maintenance since the v1.14.0 cut (18 August 2026). Kubernetes compatibility is documented in the [CAPI version book](https://cluster-api.sigs.k8s.io/reference/versions.html). Workload 1.37 requires CAPI ≥ v1.13.6 or ≥ v1.14.1.
-- **Karpenter:** `NodePool` / `NodeClaim` APIs are `karpenter.sh/v1`. AWS `EC2NodeClass` is `karpenter.k8s.aws/v1`. Provider v1.14.x lists Kubernetes 1.29–1.36; check the chart before pointing a 1.37 cluster at it.
+- **Karpenter:** `NodePool` / `NodeClaim` APIs are `karpenter.sh/v1`. AWS `EC2NodeClass` is `karpenter.k8s.aws/v1`. Current lines: provider v1.15.0 (10 October 2026) and v1.14.x LTS; check the chart's documented Kubernetes range before pointing a cluster at a new provider version.
 - **EKS Auto Mode:** GA; AWS continues to add Load Balancer Controller features (through AWS LBC v3.4 as of August 2026). Gateway API on Auto Mode’s managed LBC is **not** supported yet — run a separate Gateway controller if you need it.
 - **GKE Autopilot:** GA; Autopilot is the default cluster mode for many new GKE users. Workload identity, shielded nodes, and restricted Pod Security are on by default.
 - **EKS Fargate:** still supported, no longer the recommended default for new compute.

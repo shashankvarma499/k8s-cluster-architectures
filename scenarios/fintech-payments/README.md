@@ -91,6 +91,7 @@ The deep-dive, including PCI scope mapping and RTO/RPO, is [architecture.md](arc
 | 10 | Tetragon eBPF runtime | Prove the payments API never exec'd a shell | [0010](decisions/0010-tetragon-runtime-enforcement.md) |
 | 11 | Gateway API, not Ingress | ingress-nginx is unpatched; Gateway API v1.6 is Standard | [0011](decisions/0011-gateway-api.md) |
 | 12 | CDE NodePool is on-demand only | Spot interruption is an availability and tenancy risk in-scope | [0012](decisions/0012-cde-on-demand-nodes.md) |
+| 13 | Argo CD ≥ 3.5.4 (pin 3.5.5) after October 2026 advisories | Four CRITICAL repo-server paths; emergency patch + hardening | [0013](decisions/0013-argocd-security-hardening.md) |
 
 ## Table of contents
 
@@ -159,6 +160,7 @@ Bootstrap Argo CD and the app-of-apps (see [gitops/README.md](gitops/README.md))
 helm repo add argo https://argoproj.github.io/argo-helm
 helm upgrade --install argocd argo/argo-cd --version 10.6.4 \
   --namespace argocd --create-namespace \
+  --set global.image.tag=v3.5.5 \
   --set global.domain=argocd.payments.internal \
   --set configs.params.server.insecure=false
 
@@ -200,7 +202,7 @@ Replace `YOUR_ORG` with the Git remote that holds this repository. The bootstrap
 | EKS Kubernetes | 1.34 (standard support through 2026-12-02) | [EKS version calendar](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html) |
 | Karpenter | 1.14.1 (K8s 1.29–1.36) | [endoflife.date/karpenter](https://endoflife.date/karpenter), [karpenter.sh](https://karpenter.sh/) |
 | Cilium | 1.20.1 | [helm.cilium.io](https://helm.cilium.io/) |
-| Argo CD | 3.5.2 / chart 10.6.4 | [argo-cd v3.5.2](https://github.com/argoproj/argo-cd/releases/tag/v3.5.2) |
+| Argo CD | 3.5.5 / chart 10.6.4 | [argo-cd v3.5.5](https://github.com/argoproj/argo-cd/releases/tag/v3.5.5) |
 | Argo Rollouts | 1.9.1 / chart 2.41.1 | [argo-rollouts](https://github.com/argoproj/argo-rollouts/releases) |
 | Vault Helm | 0.34.1 (app 2.0.4) | [hashicorp/vault-helm](https://github.com/hashicorp/vault-helm/releases) |
 | Tetragon | 1.7.1 (chart 1.7.0) | [cilium/tetragon](https://github.com/cilium/tetragon/releases) |

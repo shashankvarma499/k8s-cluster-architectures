@@ -71,6 +71,20 @@ Prefer CSI or injector for cardholder-adjacent secrets. If you must materialize 
 
 **Pod certificates (stable 1.37)** issue short-lived X.509 to a projected volume via `PodCertificateRequest`. This is the in-tree path toward workload identity without a SPIFFE sidecar — complementary to CSI, not a Vault replacement for arbitrary KV secrets.
 
+### Post-quantum signatures arrive in core (1.38 cycle)
+
+The 1.38 alphas ship the first upstream **ML-DSA (FIPS 204)** support: pod
+certificate requests can be signed with ML-DSA keys (**Beta**), PKCS#10 CSRs
+are accepted behind the `CertificateSigningRequestMLDSA` feature gate, the
+kubelet can request ECDSA/RSA/ML-DSA client and server certificates,
+client-go supports ML-DSA keys via Go 1.27 `crypto/mldsa`, and kubeadm
+accepts `ML-DSA-44/65/87` encryption algorithms for new clusters
+([1.38 changelog](https://github.com/kubernetes/kubernetes/blob/master/CHANGELOG/CHANGELOG-1.38.md)).
+This is the start of the cluster PKI's post-quantum migration; expect
+hybrid (RSA + ML-DSA) certificates to be the stepping stone before
+clusters can claim "harvest-now-decrypt-later" resistance. None of this is
+production-ready — alpha/Beta feature gates on test clusters only.
+
 ## When to use
 
 | Problem | Tool |

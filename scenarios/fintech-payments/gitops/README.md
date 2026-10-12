@@ -4,19 +4,24 @@ Git is the desired state for everything that is not the VPC/EKS/Karpenter/Cilium
 
 ## Point it at this repo
 
-1. Install Argo CD 3.5.2 (HA) after `terraform apply`:
+1. Install Argo CD 3.5.5 (HA) after `terraform apply`:
 
    ```bash
    helm repo add argo https://argoproj.github.io/argo-helm
    helm upgrade --install argocd argo/argo-cd --version 10.6.4 \
      --namespace argocd --create-namespace \
+     --set global.image.tag=v3.5.5 \
      --set redis-ha.enabled=true \
      --set controller.replicas=2 \
      --set server.replicas=2 \
      --set repoServer.replicas=2
    ```
 
-   Official HA install YAML is also published: `https://raw.githubusercontent.com/argoproj/argo-cd/v3.5.2/manifests/ha/install.yaml` ([release notes](https://github.com/argoproj/argo-cd/releases/tag/v3.5.2)).
+   3.5.5 (12 October 2026) carries the fixes for the October 2026 advisory
+   batch (four CRITICAL repo-server issues); **3.5.4 is the minimum
+   acceptable version**. See [ADR 0013](../decisions/0013-argocd-security-hardening.md).
+
+   Official HA install YAML is also published: `https://raw.githubusercontent.com/argoproj/argo-cd/v3.5.5/manifests/ha/install.yaml` ([release notes](https://github.com/argoproj/argo-cd/releases/tag/v3.5.5)).
 
 2. Render the **bootstrap** Application (the only object you apply by hand) with *your* Git remote:
 
