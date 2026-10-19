@@ -5,6 +5,103 @@ Kubernetes clusters are built. Each entry points at the primary source; the
 deep-dive for that layer (and, where warranted, a fintech-payments ADR) is
 updated in the same commit. Entries are appended newest-first.
 
+## 2026-10-19 — Istio 1.31.2 security batch (ISTIO-SECURITY-2026-007); two backfilled Kubernetes CVEs; 1.34 EOL on 27 October
+
+- **Istio 1.31.2 / 1.30.6 / 1.29.9** shipped on 15–16 October 2026 as
+  security release **ISTIO-SECURITY-2026-007**
+  ([1.31.2 announcement](https://istio.io/latest/news/releases/1.31.x/announcing-1.31.2/),
+  [advisory](https://istio.io/latest/news/security/istio-security-2026-007/)):
+  - Two Envoy CVEs: **GHSA-8vc2-jrm4-835w** (CVSS 7.5) and
+    **GHSA-47vj-9r25-wv5j** (CVSS 6.5) — unauthenticated crashes of the
+    OAuth2 and api_key_auth HTTP filters on CONNECT requests without a
+    `:path` header.
+  - Two Istio CVEs: **GHSA-w44g-8m76-8gc5** (CVSS 7.4) —
+    AuthorizationPolicy method rules bypassed over HTTP/2 by changing
+    the case of the method — and **GHSA-7p2q-4xvg-vxc6** (CVSS 7.7) —
+    istiod crashes in **ambient mode** when a ServiceEntry claims the
+    address of an IP-addressed waypoint.
+  - Hardening: `istioctl` now verifies the istiod certificate when
+    talking to XDS (`--insecure` to skip); `istioctl manifest translate`
+    escapes values to close a shell-injection hole; the Wasm OCI
+    fetcher's plaintext-HTTP retry is now allowlist-only
+    (`WASM_INSECURE_REGISTRIES`); a new `MAX_RA_WORKLOAD_CERT_TTL`
+    (default 48h) caps certificate TTL on the experimental Kubernetes
+    CSR RA path.
+  - This is the second security batch in four weeks (006 landed
+    21 September): treat Istio as a monthly-patch dependency — ambient
+    included. See [networking.md](networking.md).
+- **Backfill — Kubernetes disclosed two Medium CVEs**, both fixed in the
+  23 September patch round (v1.37.1 / 1.36.5 / 1.35.9 / 1.34.12) that
+  this changelog covered on 28 September without the CVE details:
+  - **CVE-2026-2270** (CVSS 5.9, disclosed 23 September): a confused
+    deputy in the StatefulSet controller lets a user with
+    namespace-scoped write on StatefulSet *and* ControllerRevision
+    objects create a **cross-namespace Pod** with full control over its
+    spec and metadata. Fixed by restoring only `spec` from
+    ControllerRevisions. Directly relevant to multi-tenant clusters
+    ([advisory](https://discuss.kubernetes.io/t/security-advisory-cve-2026-2270-statefulset-and-controllerrevision-write-permissions-allow-cross-namespace-pod-creation/35276),
+    [issue #142097](https://github.com/kubernetes/kubernetes/issues/142097)).
+  - **CVE-2026-19444** (CVSS 6.5, disclosed 28 September): `kubectl cp`
+    path traversal on **Windows clients** — a malicious tar binary in a
+    container can write files to arbitrary paths on the local machine,
+    limited by the local user's permissions. Linux/macOS clients are
+    unaffected; remediation is a client upgrade to kubectl ≥ v1.34.12 /
+    1.35.9 / 1.36.5
+    ([advisory](https://discuss.kubernetes.io/t/security-advisory-cve-2026-19444-kubectl-cp-path-traversal-on-windows-allows-arbitrary-file-writes/35301),
+    [issue #141294](https://github.com/kubernetes/kubernetes/issues/141294)).
+    See [security.md](security.md).
+- **Kubernetes 1.34 reaches end of life on 27 October 2026**
+  ([patch-releases page](https://kubernetes.io/releases/patch-releases/)).
+  1.34 entered maintenance mode on 27 August; v1.34.12 (15 September)
+  was its final patch. Clusters still on 1.34 stop receiving CVE fixes
+  next week — finish the move to 1.35/1.36/1.37 now.
+- **The October patch round has not landed yet.** As of 19 October,
+  `dl.k8s.io/release/stable-1.37.txt` still resolves to **v1.37.1** and
+  `latest.txt` to v1.38.0-alpha.2; the expected 1.37.2 / 1.36.6 /
+  1.35.10 round slips past the mid-October estimate
+  ([stable-1.37.txt](https://dl.k8s.io/release/stable-1.37.txt)).
+- **Argo CD v3.6.0-rc3** published 15 October
+  ([release](https://github.com/argoproj/argo-cd/releases/tag/v3.6.0-rc3)):
+  mostly bug fixes (reposerver CMP goroutine/stale-manifest leak, OCI
+  tag-list caching, escaped repo-creds URL routing) plus configurable
+  **Dex TLS cipher suites and curve preferences**. GA target remains
+  3 November 2026; keep 3.5.5 in production until then.
+- **Cilium v1.20.3** (+ v1.19.9, v1.18.15) shipped 15 October
+  ([release](https://github.com/cilium/cilium/releases/tag/v1.20.3)):
+  regular patch, no CVEs. Notable fixes: a conntrack GC race that could
+  delete a live connection's NAT mapping and reallocate its SNAT source
+  port, and the operator now **errors on CiliumNetworkPolicies with
+  `nodeSelector`** instead of silently enforcing nothing. Cilium 1.21
+  remains pre-release (v1.21.0-pre.3).
+- **Kueue v0.20.2 and v0.19.9** published 15 October
+  ([release](https://github.com/kubernetes-sigs/kueue/releases/tag/v0.20.2)):
+  bug fixes including a DRA admission charge recompute when a Workload
+  is updated mid-scheduling, FairSharing preemption fixes, and kueuectl
+  CLI corrections.
+- **Karpenter v1.14.2** published 16 October — a patch on the v1.14 LTS
+  line
+  ([release](https://github.com/kubernetes-sigs/karpenter/releases/tag/v1.14.2));
+  v1.15.0 remains the current line.
+- **KubeVirt v1.10.0-beta.0** published 13 October
+  ([release](https://github.com/kubevirt/kubevirt/releases/tag/v1.10.0-beta.0)):
+  beta with breaking changes — the launcher-plugin `spec.domainHooks` is
+  renamed `spec.launcherHooks` (explicit hook points; `PreVMStop` →
+  `OnVMStop`), virt-launcher-monitor no longer handles Istio sidecar
+  termination (**Istio ≥ 1.27 required**, or native sidecar mode), and
+  virt-export Services move to headless on 8443. Do not run in
+  production.
+- **Cluster API v1.14.3** (7 October, backfill)
+  ([release](https://github.com/kubernetes-sigs/cluster-api/releases/tag/v1.14.3)):
+  bug-fix patch (KCP etcd-member matching, owner-reference resolution);
+  support matrix unchanged — management clusters v1.33–v1.37, workload
+  clusters v1.31–v1.37. grpc bumped to 1.83.2 for security advisories.
+- **Unchanged since last run:** Gateway API v1.7.0-rc.1 (8 October) is
+  still the newest tag — no v1.7 GA yet; Velero v1.18.4 and Tetragon
+  v1.7.1 remain current; no new CNCF graduations; no notable production
+  post-mortems surfaced this week. KubeCon + CloudNativeCon NA is
+  9–12 November in Salt Lake City — expect the next major announcement
+  wave there.
+
 ## 2026-10-12 — Argo CD security advisory batch (4 CRITICAL); Karpenter v1.15 GA; Gateway API v1.7 RC1
 
 - **Argo CD disclosed eight security advisories on 6 October 2026**, four

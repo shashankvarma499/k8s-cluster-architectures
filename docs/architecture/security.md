@@ -133,6 +133,7 @@ production-ready — alpha/Beta feature gates on test clusters only.
 7. **Vault leases vs CSI.** CSI’s Vault provider uses Agent for renewal; if that process dies, leases can be revoked under a running Pod. Test restart behaviour.
 8. **Encryption-at-rest key loss.** Kubernetes 1.37 keeps beta support for deleting undecryptable objects through the API ([KEP-3926](https://github.com/kubernetes/enhancements/issues/3926)). That is a recovery tool, not a backup strategy. Velero *plus* KMS key backups.
 9. **Image verification is only as good as the admission path.** CronJobs, Jobs, and controllers that create Pods must be in the match constraints. Empty `match` on an ImageValidatingPolicy is how “we verify everything” becomes “we verify Deployments.”
+10. **ControllerRevision is an RBAC boundary.** CVE-2026-2270 (fixed v1.37.1 / 1.36.5 / 1.35.9 / 1.34.12) showed that namespace-scoped write on StatefulSet *and* ControllerRevision lets an attacker drive a confused-deputy in the StatefulSet controller into creating a **cross-namespace Pod**. The fix restores only `spec` from ControllerRevisions — but multi-tenant clusters should also audit who holds ControllerRevision write anywhere. And keep **kubectl clients** patched: CVE-2026-19444 lets a malicious container tar write arbitrary files when `kubectl cp` runs on a Windows client (fixed in kubectl ≥ v1.34.12 / 1.35.9 / 1.36.5; Linux/macOS unaffected).
 
 ## A default posture for a payments cluster
 
@@ -156,3 +157,5 @@ production-ready — alpha/Beta feature gates on test clusters only.
 - [Secrets Store CSI concepts](https://secrets-store-csi-driver.sigs.k8s.io/concepts)
 - [Vault CSI provider](https://developer.hashicorp.com/vault/docs/deploy/kubernetes/csi)
 - [Kubernetes v1.37 — Pod certificates](https://kubernetes.io/blog/2026/08/26/kubernetes-v1-37-release/)
+- [CVE-2026-2270 — StatefulSet/ControllerRevision cross-namespace pod creation](https://discuss.kubernetes.io/t/security-advisory-cve-2026-2270-statefulset-and-controllerrevision-write-permissions-allow-cross-namespace-pod-creation/35276)
+- [CVE-2026-19444 — kubectl cp path traversal on Windows](https://discuss.kubernetes.io/t/security-advisory-cve-2026-19444-kubectl-cp-path-traversal-on-windows-allows-arbitrary-file-writes/35301)
