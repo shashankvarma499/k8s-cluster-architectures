@@ -85,6 +85,25 @@ hybrid (RSA + ML-DSA) certificates to be the stepping stone before
 clusters can claim "harvest-now-decrypt-later" resistance. None of this is
 production-ready — alpha/Beta feature gates on test clusters only.
 
+### Trust-store events land in the Go runtime (eMudhra, October 2026)
+
+When a CA's keys are compromised, the fix must land in the *verifier*, not
+the CA. **CVE-2026-111943**: Go 1.27.3 / 1.26.10 (19 October 2026) hard-block
+the SPKI hashes of **eight compromised eMudhra intermediate CA keys** in
+`crypto/x509`, so no chain under them verifies anymore
+([Go issue #82345](https://github.com/golang/go/issues/82345),
+[Talos](https://blog.talosintelligence.com/compromised-intermediate-certificates/)).
+The ecosystem response was immediate and out-of-band: **Cilium
+v1.20.4 / 1.19.10 / 1.18.16** and **Istio 1.31.3 / 1.30.7**
+([ISTIO-SECURITY-2026-008](https://istio.io/latest/news/security/istio-security-2026-008/))
+rebased onto the patched Go; ztunnel picked up rustls-webpki 0.103.16, and
+the emSign ECC Root CA - G3 was dropped from image CA bundles. Two
+operational lessons: **upgrading the Go toolchain patches nothing by
+itself** — every Go-built control-plane image must be *rebuilt* with
+Go ≥ 1.27.3 / 1.26.10 or patched by its vendor — and image scanning must
+track *runtime trust stores*, not just dependency CVEs. Treat a CA
+compromise as a fleet-rebuild event with the urgency of an RCE.
+
 ## When to use
 
 | Problem | Tool |
@@ -134,6 +153,7 @@ production-ready — alpha/Beta feature gates on test clusters only.
 8. **Encryption-at-rest key loss.** Kubernetes 1.37 keeps beta support for deleting undecryptable objects through the API ([KEP-3926](https://github.com/kubernetes/enhancements/issues/3926)). That is a recovery tool, not a backup strategy. Velero *plus* KMS key backups.
 9. **Image verification is only as good as the admission path.** CronJobs, Jobs, and controllers that create Pods must be in the match constraints. Empty `match` on an ImageValidatingPolicy is how “we verify everything” becomes “we verify Deployments.”
 10. **ControllerRevision is an RBAC boundary.** CVE-2026-2270 (fixed v1.37.1 / 1.36.5 / 1.35.9 / 1.34.12) showed that namespace-scoped write on StatefulSet *and* ControllerRevision lets an attacker drive a confused-deputy in the StatefulSet controller into creating a **cross-namespace Pod**. The fix restores only `spec` from ControllerRevisions — but multi-tenant clusters should also audit who holds ControllerRevision write anywhere. And keep **kubectl clients** patched: CVE-2026-19444 lets a malicious container tar write arbitrary files when `kubectl cp` runs on a Windows client (fixed in kubectl ≥ v1.34.12 / 1.35.9 / 1.36.5; Linux/macOS unaffected).
+11. **Runtime trust stores, not just dependency CVEs.** CVE-2026-111943 (compromised eMudhra intermediates, October 2026) only bites binaries *rebuilt* with Go ≥ 1.27.3 / 1.26.10 — an old image keeps trusting the compromised CAs no matter how many packages you update. After a CA-compromise event, rebuild or vendor-patch every Go-built image; "no new CVEs" scanner reports will not tell you this.
 
 ## A default posture for a payments cluster
 
@@ -159,3 +179,5 @@ production-ready — alpha/Beta feature gates on test clusters only.
 - [Kubernetes v1.37 — Pod certificates](https://kubernetes.io/blog/2026/08/26/kubernetes-v1-37-release/)
 - [CVE-2026-2270 — StatefulSet/ControllerRevision cross-namespace pod creation](https://discuss.kubernetes.io/t/security-advisory-cve-2026-2270-statefulset-and-controllerrevision-write-permissions-allow-cross-namespace-pod-creation/35276)
 - [CVE-2026-19444 — kubectl cp path traversal on Windows](https://discuss.kubernetes.io/t/security-advisory-cve-2026-19444-kubectl-cp-path-traversal-on-windows-allows-arbitrary-file-writes/35301)
+- [CVE-2026-111943 — compromised eMudhra intermediates blocked in Go crypto/x509 (Go issue #82345)](https://github.com/golang/go/issues/82345)
+- [Talos — Compromised eMudhra intermediate certificates](https://blog.talosintelligence.com/compromised-intermediate-certificates/)

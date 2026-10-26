@@ -5,6 +5,86 @@ Kubernetes clusters are built. Each entry points at the primary source; the
 deep-dive for that layer (and, where warranted, a fintech-payments ADR) is
 updated in the same commit. Entries are appended newest-first.
 
+## 2026-10-26 — eMudhra CA compromise hits the Go trust store (CVE-2026-111943); Cilium & Istio ship out-of-band patches
+
+- **CVE-2026-111943: compromised eMudhra intermediate CA keys.** Go
+  **1.27.3 / 1.26.10** (19 October 2026) hard-block the SPKI hashes of
+  **eight compromised eMudhra intermediate CA keys** in `crypto/x509`, so
+  no certificate chain under them verifies anymore
+  ([Go issue #82345](https://github.com/golang/go/issues/82345),
+  [Talos](https://blog.talosintelligence.com/compromised-intermediate-certificates/),
+  [Threat Landscape analysis](https://threatlandscape.io/blog/go-hard-blocks-emudhra-intermediate-ca-keys-cve-2026-111943)).
+  - The Go advisory does not name the CA; independent analysis ties the
+    eight keys to intermediates under the **emSign Root TLS CA - G3** and
+    **emSign Root CS CA - G3** hierarchies. The companion
+    **CVE-2026-111944** covers the non-Go trust stacks
+    ([Qualys](https://blog.qualys.com/product-tech/2026/10/23/how-to-identify-compromised-emudhra-certificates-with-qualys-cve-2026-111943-and-cve-2026-111944/)).
+  - The operational trap: **upgrading the Go toolchain patches nothing by
+    itself.** Every Go-built image in the cluster — controllers,
+    webhooks, CNI, operators — must be *rebuilt* with Go ≥ 1.27.3 /
+    1.26.10 (or patched by its vendor) before it stops trusting the
+    compromised intermediates. Treat this as a fleet-wide image-rebuild
+    event, not a package update. See [security.md](security.md).
+- **Cilium v1.20.4 / v1.19.10 / v1.18.16** (23 October) — out-of-band
+  security patch: Go 1.26.10, deps refreshed
+  ([release](https://github.com/cilium/cilium/releases/tag/v1.20.4)).
+  Also fixes a **v1.20.3 regression** where Gateway API `BackendTLSPolicy`
+  handling caused high CPU and traffic-forwarding failure, plus the usual
+  bugfix batch. See [networking.md](networking.md).
+- **Istio 1.31.3 / 1.30.7** (21 October,
+  [announcement](https://istio.io/latest/news/releases/1.31.x/announcing-1.31.3/),
+  [ISTIO-SECURITY-2026-008](https://istio.io/latest/news/security/istio-security-2026-008/)):
+  Go 1.26.10 in istiod/istioctl/pilot-agent and rustls-webpki 0.103.16 in
+  ztunnel reject the compromised chains, and **emSign ECC Root CA - G3**
+  is dropped from the ubuntu-based and distroless image CA bundles. Also:
+  the ambient node-untaint controller can now wait for **ztunnel
+  readiness** (`PILOT_NODE_UNTAINT_CHECK_ZTUNNEL=true`, off by default),
+  and istiod auto-renews an expired self-signed CA in `istio-ca-secret`
+  instead of failing to start. That is **three Istio security batches in
+  five weeks** — budget for monthly mesh patching, ambient included.
+  **Istio 1.32.0-beta.0** (22 October) opened the next dev cycle.
+- **Kubernetes 1.34 reaches end of life on 27 October 2026** — this week
+  (flagged last run). v1.34.12 (15 September) was its final patch;
+  clusters still on 1.34 stop receiving CVE fixes immediately
+  ([patch-releases page](https://kubernetes.io/releases/patch-releases/)).
+- **The Kubernetes October patch round still has not landed.** As of
+  26 October, `dl.k8s.io/release/stable-1.37.txt` still resolves to
+  **v1.37.1** (next: 1.37.2) and stable-1.36 to v1.36.5 (next: 1.36.6) —
+  the mid-October round is now ~two weeks late. The 1.38 cycle is
+  unchanged at alpha.2; Code/Test Freeze lands 16–17 November and GA on
+  16 December ([schedule](https://www.kubernetes.dev/resources/release/)).
+- **Argo CD v3.6.0-rc4** (22 October) — bug fixes (sharding recompute
+  when an unknown cluster appears, SSH fetch through SOCKS5 proxies,
+  server-side diff false positives), Go 1.27.3; GA target remains
+  3 November
+  ([release](https://github.com/argoproj/argo-cd/releases/tag/v3.6.0-rc4)).
+  Bugfix patches **v3.5.6** (20 October) and **v3.3.18** (22 October) are
+  current on the older lines.
+- **Gateway API v1.7.0-rc.3** (23 October,
+  [release](https://github.com/kubernetes-sigs/gateway-api/releases/tag/v1.7.0-rc.3)):
+  **rc.2 was retired** after a problem with its release manifests;
+  pre-routing listener filters can now attach via **ListenerSet**
+  (GEP-5224); `HTTPRouteRetry.Attempts` reverted to `*int` with minimum 0
+  so retries can be disabled per rule; **TLSRouteMixedMode** moved to the
+  Standard channel.
+- **Karpenter v1.15.1 + v1.14.3** (23 October) — patch releases on both
+  current lines
+  ([release](https://github.com/kubernetes-sigs/karpenter/releases/tag/v1.15.1)).
+- **Kueue v0.20.3 / v0.19.10** (22 October,
+  [release](https://github.com/kubernetes-sigs/kueue/releases/tag/v0.20.3)):
+  MultiKueue **RayService in-tree autoscaling** on worker clusters
+  (feature gate), a classical-preemption candidate-order cache (alpha),
+  and a DRA quota-charging fix for DeviceClasses requested by implicit
+  extended-resource name.
+- **vCluster v0.37.4** (20 October) — patch on the stable line; the
+  v0.38 alpha series is in flight
+  ([release](https://github.com/loft-sh/vcluster/releases/tag/v0.37.4)).
+- **Unchanged:** Velero v1.18.4, Tetragon v1.7.1, Cluster API v1.14.3,
+  KubeVirt v1.10.0-beta.0. No CNCF graduations and no notable production
+  post-mortems surfaced this week. KubeCon + CloudNativeCon NA opens
+  9–12 November in Salt Lake City — expect the next announcement wave
+  there.
+
 ## 2026-10-19 — Istio 1.31.2 security batch (ISTIO-SECURITY-2026-007); two backfilled Kubernetes CVEs; 1.34 EOL on 27 October
 
 - **Istio 1.31.2 / 1.30.6 / 1.29.9** shipped on 15–16 October 2026 as
