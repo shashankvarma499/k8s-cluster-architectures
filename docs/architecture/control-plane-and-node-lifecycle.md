@@ -4,6 +4,15 @@ Cluster lifecycle in 2026 is split in two: **who owns the control plane**, and *
 
 As of September 2026: [Cluster API v1.14.2](https://github.com/kubernetes-sigs/cluster-api/releases) is current (management clusters Kubernetes 1.33–1.37, workload clusters 1.31–1.37). [Karpenter v1.15.0](https://github.com/kubernetes-sigs/karpenter/releases) (10 October 2026) is the current quarterly minor; the AWS provider v1.14.x line remains the LTS, with the `karpenter.sh/v1` NodePool API that has been stable since Karpenter 1.0. AWS documents [EKS Auto Mode](https://docs.aws.amazon.com/eks/latest/best-practices/automode.html) as the recommended successor to self-managed Karpenter *and* to EKS Fargate for most new clusters. GKE Autopilot remains Google’s equivalent managed data plane.
 
+Kubernetes itself is on the 1.38 cycle: **v1.38.0-beta.0** shipped on
+4–6 November 2026 with **gang scheduling (KEP-4671) and workload-aware
+preemption (KEP-5710) marked stable** — all-or-nothing scheduling for
+AI/ML and HPC via the Workload / PodGroup APIs — and
+`OpenAPIV2LazyBuild` (lazy `/openapi/v2` builds) beta on by default.
+Code/Test Freeze lands 16–17 November; GA is 16 December
+([release schedule](https://www.kubernetes.dev/resources/release/)).
+The October patch round is out: 1.37.2 / 1.36.6 / 1.35.10 / 1.34.13.
+
 ## What it is
 
 ### Cluster API

@@ -5,7 +5,7 @@ Cluster networking in 2026 has three layers that used to be sold as separate pro
 Two calendar facts dominate this layer:
 
 - The community [ingress-nginx controller retired in March 2026](https://kubernetes.io/blog/2025/11/11/ingress-nginx-retirement/). Existing Deployments still route traffic; they will never get another CVE patch.
-- [Istio ambient mode](https://www.cncf.io/blog/2024/11/07/fast-secure-and-simple-istios-ambient-mode-reaches-general-availability-in-v1-24/) has been **GA since Istio 1.24** (November 2024). Current Istio is [1.31.3](https://istio.io/latest/news/releases/1.31.x/announcing-1.31.3/) (1.31.0 on 31 August 2026, then three security patches in five weeks: 1.31.1 on 21 September fixed [ISTIO-SECURITY-2026-006](https://istio.io/latest/news/security/istio-security-2026-006/) — 13 Envoy/Istio CVEs including a BackendTLSPolicy fail-open on sidecars — 1.31.2 on 15 October fixed [ISTIO-SECURITY-2026-007](https://istio.io/latest/news/security/istio-security-2026-007/) — an AuthorizationPolicy method-case bypass over HTTP/2 and an ambient-mode istiod crash — and 1.31.3 on 21 October fixed [ISTIO-SECURITY-2026-008](https://istio.io/latest/news/security/istio-security-2026-008/) — CVE-2026-111943, the compromised eMudhra intermediates, blocked via Go 1.26.10 and ztunnel rustls-webpki 0.103.16; 1.30.6/1.30.7 and 1.29.9 carry the corresponding fixes). Cilium 1.20 (July 2026) ships Gateway API 1.6.1 support; **Cilium 1.21 is still pre-release** (v1.21.0-pre.3, 2 October 2026) — do not upgrade production to it. Cilium's stable line is 1.20.x (**v1.20.4**, 23 October — out-of-band patch for CVE-2026-111943 plus a fix for the 1.20.3 BackendTLSPolicy regression).
+- [Istio ambient mode](https://www.cncf.io/blog/2024/11/07/fast-secure-and-simple-istios-ambient-mode-reaches-general-availability-in-v1-24/) has been **GA since Istio 1.24** (November 2024). Current Istio is [1.31.4](https://istio.io/latest/news/releases/1.31.x/announcing-1.31.4/) (1.31.0 on 31 August 2026, then four security patches in seven weeks: 1.31.1 on 21 September fixed [ISTIO-SECURITY-2026-006](https://istio.io/latest/news/security/istio-security-2026-006/) — 13 Envoy/Istio CVEs including a BackendTLSPolicy fail-open on sidecars — 1.31.2 on 15 October fixed [ISTIO-SECURITY-2026-007](https://istio.io/latest/news/security/istio-security-2026-007/) — an AuthorizationPolicy method-case bypass over HTTP/2 and an ambient-mode istiod crash — 1.31.3 on 21 October fixed [ISTIO-SECURITY-2026-008](https://istio.io/latest/news/security/istio-security-2026-008/) — CVE-2026-111943, the compromised eMudhra intermediates, blocked via Go 1.26.10 and ztunnel rustls-webpki 0.103.16 — and 1.31.4 in early November fixed [ISTIO-SECURITY-2026-009](https://istio.io/latest/news/security/istio-security-2026-009/) — seven CVEs led by an ambient-mode mTLS bypass where a port-level STRICT PeerAuthentication was skipped under a mesh-wide STRICT policy with workload-mode PERMISSIVE (CVSS 8.2); 1.30.6/1.30.7/1.30.8 and 1.29.9 carry the corresponding fixes). Cilium 1.20 (July 2026) ships Gateway API 1.6.1 support; **Cilium 1.21 is still pre-release** (v1.21.0-pre.4, 2 November 2026; final targeted for early February 2027) — do not upgrade production to it. Cilium's stable line is 1.20.x (**v1.20.4**, 23 October — out-of-band patch for CVE-2026-111943 plus a fix for the 1.20.3 BackendTLSPolicy regression).
 
 ## What it is
 
@@ -37,7 +37,7 @@ flowchart LR
 
 [Gateway API](https://gateway-api.sigs.k8s.io/) is a SIG-Network CRD set that replaces most Ingress use cases and, via the [GAMMA initiative](https://gateway-api.sigs.k8s.io/mesh/), also configures east-west mesh routing.
 
-**Standard channel as of v1.6.1** ([project README](https://github.com/kubernetes-sigs/gateway-api), [v1.6 blog](https://kubernetes.io/blog/2026/08/03/gateway-api-v1-6-release/)):
+**Standard channel as of v1.7.0** ([project README](https://github.com/kubernetes-sigs/gateway-api), [v1.6 blog](https://kubernetes.io/blog/2026/08/03/gateway-api-v1-6-release/)):
 
 | Resource | Status | Role |
 | --- | --- | --- |
@@ -48,23 +48,24 @@ flowchart LR
 | BackendTLSPolicy | GA (Standard since v1.4) | TLS from gateway to backend |
 | ReferenceGrant | GA | Cross-namespace secret/service refs |
 | ListenerSet | GA | Extra listeners without rewriting the Gateway |
+| HTTPRoute retries | Standard in v1.7 | Per-rule `codes` / `attempts` (GEP-1731) |
 
 Experimental resources now live in `gateway.networking.x-k8s.io` with an `X` prefix (e.g. `XBackend`). Do not put those in a PCI workload.
 
-**Gateway API v1.7** (RC3 23 October 2026 — RC2 was retired after a problem
-with its release manifests,
-[release](https://github.com/kubernetes-sigs/gateway-api/releases/tag/v1.7.0-rc.3))
-promotes **HTTPRoute retries (GEP-1731)** — `codes`, `attempts`, `backoff` —
-to the Standard channel. The Experimental channel adds per-address Gateway
-routability (GEP-5093), an OpenTelemetry-based standardized attribute
-dictionary (GEP-5253), session persistence moved to `XBackend`
-(GEP-1619/4894), pre-routing listener filters — attachable via
-`ListenerSet` as of RC3 (GEP-5224) —,
-ClusterTrustBundle in `caCertificateRefs` (GEP-5075), and an
-`XTelemetryPolicy` for distributed tracing (GEP-4768). RC3 kept
-`HTTPRouteRetry.Attempts` as `*int` (minimum 0, so retries can be disabled
-per rule) and moved `TLSRouteMixedMode` to the Standard channel. Production
-clusters stay on the v1.6 Standard channel (v1.6.3 is the current patch).
+**Gateway API v1.7.0 is GA** (5–8 November 2026,
+[release](https://github.com/kubernetes-sigs/gateway-api/releases/tag/v1.7.0)).
+The headline promotion is **HTTPRoute retries (GEP-1731) to the Standard
+channel** — `retry.codes` / `retry.attempts` on the HTTPRoute rule
+(`retry.backoff` stays implementation-specific; attempts can be set to 0
+to disable retries per rule). **TLSRouteMixedMode also moved to
+Standard.** The Experimental channel keeps growing: `XBackend` gained an
+`EndpointSelector` type routing to in-cluster Pods by label plus session
+persistence for it, an `XTelemetryPolicy` for distributed tracing landed
+(GEP-4768), per-address Gateway routability (GEP-5093) is in flight, and
+pre-routing listener filters are attachable via `ListenerSet`
+(GEP-5224). Production clusters should now plan the v1.6 → v1.7
+Standard-channel move around the retry promotion; verify your
+controller's v1.7 conformance for retries before relying on it.
 
 GAMMA (mesh) has been Standard since Gateway API v1.1.0: you attach HTTPRoutes to Services instead of Gateways, and the mesh datapath honors them. Istio and Cilium both implement this.
 
@@ -79,7 +80,7 @@ flowchart TB
   MeshRoute[HTTPRoute parentRef Service] --> SvcA
 ```
 
-**Conformance at v1.6** (implementations with reports on the release day): Agentgateway, Airlock Microgateway, GKE Gateway, kgateway, NGINX Gateway Fabric, Traefik. Cilium documents Gateway API support independently in its [service mesh docs](https://docs.cilium.io/en/stable/network/servicemesh/).
+**Conformance at v1.6** (implementations with reports on the release day): Agentgateway, Airlock Microgateway, GKE Gateway, kgateway, NGINX Gateway Fabric, Traefik. Cilium documents Gateway API support independently in its [service mesh docs](https://docs.cilium.io/en/stable/network/servicemesh/). v1.7 conformance reports are landing as implementations pick up the retries promotion — check your controller's report before relying on `HTTPRoute` retries.
 
 ### Service mesh: sidecar vs Istio ambient vs Cilium
 

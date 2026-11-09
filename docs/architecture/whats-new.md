@@ -5,6 +5,81 @@ Kubernetes clusters are built. Each entry points at the primary source; the
 deep-dive for that layer (and, where warranted, a fintech-payments ADR) is
 updated in the same commit. Entries are appended newest-first.
 
+## 2026-11-09 — Gateway API v1.7 GA; Argo CD 3.6 GA; K8s 1.38 hits beta.0; Istio ships a fourth security batch
+
+- **Gateway API v1.7.0 is GA** (landed 5–8 November 2026,
+  [release](https://github.com/kubernetes-sigs/gateway-api/releases/tag/v1.7.0)).
+  The headline change: **HTTPRoute retries (GEP-1731) are now Standard
+  channel** — `retry.codes` / `retry.attempts` in the HTTPRoute rule, with
+  `HTTPRouteRetryCodes` and `HTTPRouteRetryConnectionError` graduated
+  (`retry.backoff` remains implementation-specific). **TLSRouteMixedMode
+  is also Standard** now, `XBackend` gained an `EndpointSelector` type
+  that routes to in-cluster Pods by label plus session persistence for
+  it, and an experimental `XTelemetryPolicy` (GEP-4768) landed. Also
+  fixed: a nil `Group` pointer panic in the conformance helpers. This
+  closes out the RC3 line tracked here on 26 October (rc.2 was retired
+  over broken release manifests). Production Standard-channel upgrades:
+  retries are the feature to plan around; controllers that don't
+  implement them yet will surface it via conformance. See
+  [networking.md](networking.md).
+- **Argo CD v3.6.0 GA on 3 November 2026**, as scheduled
+  ([release](https://github.com/argoproj/argo-cd/releases/tag/v3.6.0),
+  [blog](https://blog.argoproj.io/argo-cd-v3-6-rc1-is-here-c0b562dc78d1)).
+  Headline for production: the **ApplicationSet controller now exposes
+  progressive-sync Prometheus metrics** (per-step application status
+  gauge, syncs-triggered counter, detection-to-trigger histogram) and
+  **new failure conditions** (`ApplicationSetRolloutError`,
+  `InvalidRolloutConfig`) so progressive rollouts stop failing silently.
+  With progressive sync enabled, the controller now adds a refresh
+  annotation to all owned applications and **waits for them to
+  reconcile before starting the next step**
+  ([upgrade guide](https://argo-cd.readthedocs.io/en/latest/operator-manual/upgrading/3.5-3.6/)).
+  Also: SLSA Level 3 provenance on images and binaries. Two upgrade
+  caveats: server-side diff / health-event reporting changes can read as
+  cluster drift after upgrading from 3.5, and **the 3.3 line is now EOL**
+  (supported: 3.4.13 / 3.5.7 / 3.6.0). See
+  [gitops-and-delivery.md](gitops-and-delivery.md).
+- **Kubernetes 1.38.0-beta.0 shipped** (4–6 November 2026,
+  [changelog](https://github.com/kubernetes/kubernetes/blob/master/CHANGELOG/CHANGELOG-1.38.md)):
+  **gang scheduling (KEP-4671) and workload-aware preemption (KEP-5710)
+  are marked stable** — all-or-nothing scheduling for AI/ML and HPC via
+  the Workload / PodGroup APIs. **OpenAPIV2LazyBuild** (kube-apiserver
+  builds `/openapi/v2` on first request instead of at startup) is beta
+  and on by default — a real memory win on clusters that rarely request
+  OpenAPI v2. Code/Test Freeze lands 16–17 November, GA 16 December
+  ([schedule](https://www.kubernetes.dev/resources/release/)).
+- **The October patch round finally landed**: stable-1.37 now resolves
+  to **v1.37.2**, stable-1.36 to **v1.36.6**, stable-1.35 to
+  **v1.35.10**, and stable-1.34 to **v1.34.13** — the final patch for
+  the now-EOL 1.34 line ([patch-releases
+  page](https://kubernetes.io/releases/patch-releases/)). k3s has
+  already cut a release carrying 1.37.2
+  ([k3s releases](https://github.com/k3s-io/k3s/releases)). Do not let
+  clusters sit on 1.34.13 thinking it buys support — 1.34 is EOL
+  regardless of the patch.
+- **Istio 1.31.4 security release — ISTIO-SECURITY-2026-009**
+  ([announcement](https://istio.io/latest/news/releases/1.31.x/announcing-1.31.4/),
+  [advisory](https://istio.io/latest/news/security/istio-security-2026-009/)):
+  seven CVEs plus one non-CVE fix. The most severe (CVSS 8.2) is an
+  **ambient-mode mTLS bypass**: an operator-precedence bug let a
+  port-level STRICT `PeerAuthentication` be skipped when the workload
+  mode was PERMISSIVE under a mesh-wide STRICT policy, so plaintext
+  reached a port that required mTLS. Also fixed: AuthorizationPolicy
+  header-matching bypass over case sensitivity (CVSS 7.4), a stale
+  conntrack entry bypassing sidecar interception (CVSS 7.4), and a
+  malformed `istio.io/debug` xDS request crash-looping istiod (CVSS
+  7.7). Upgrade: 1.31 → **1.31.4**, 1.30 → **1.30.8**. That is four
+  security batches in seven weeks — if you have not already moved mesh
+  patching to a monthly (or faster) cadence, this settles the question.
+- **Cilium 1.21 remains pre-release** — `v1.21.0-pre.4` (2 November
+  2026, [releases](https://github.com/cilium/cilium/releases)); the
+  project now targets a v1.21.0 final release in **early February 2027**
+  ([milestones](https://github.com/cilium/cilium/discussions/48369)).
+  Stable line stays 1.20.x.
+- **KubeCon + CloudNativeCon NA opens today** (9–12 November, Salt Lake
+  City; ArgoCon co-located). Expect the next wave of announcements —
+  this changelog will absorb them as they land.
+
 ## 2026-10-26 — eMudhra CA compromise hits the Go trust store (CVE-2026-111943); Cilium & Istio ship out-of-band patches
 
 - **CVE-2026-111943: compromised eMudhra intermediate CA keys.** Go

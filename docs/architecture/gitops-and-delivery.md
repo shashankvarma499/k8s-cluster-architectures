@@ -2,7 +2,7 @@
 
 Delivery in 2026 is Git (or OCI) as the desired state, a reconciler that makes the cluster match, a **progressive** rollout that can abort on SLOs, and a cost/autoscaling loop that keeps the nodes you just provisioned honest.
 
-The two CNCF-graduated reconcilers are [Argo CD](https://argo-cd.readthedocs.io/) **3.5.5** (12 October 2026; the 3.5.4 security patch on 6 October is mandatory — see below) and [Flux](https://fluxcd.io/) **2.9.5** (31 August 2026). Progressive delivery on the Argo side is [Argo Rollouts](https://argoproj.github.io/rollouts/) **v1.9.1**. Event-driven scale is [KEDA](https://keda.sh/) **2.20.x**. Cost is [OpenCost](https://www.opencost.io/) (CNCF incubating; 1.121 added inference cost tracking) and the commercial [Kubecost](https://www.kubecost.com/) product built on the same engine. Vertical rightsizing is still [VPA](https://github.com/kubernetes/autoscaler/tree/master/vertical-pod-autoscaler), now sitting next to **stable in-place Pod resize**.
+The two CNCF-graduated reconcilers are [Argo CD](https://argo-cd.readthedocs.io/) **3.6.0** (GA 3 November 2026; the 3.5.4 security patch on 6 October is mandatory on that line — see below) and [Flux](https://fluxcd.io/) **2.9.5** (31 August 2026). Progressive delivery on the Argo side is [Argo Rollouts](https://argoproj.github.io/rollouts/) **v1.9.1**. Event-driven scale is [KEDA](https://keda.sh/) **2.20.x**. Cost is [OpenCost](https://www.opencost.io/) (CNCF incubating; 1.121 added inference cost tracking) and the commercial [Kubecost](https://www.kubecost.com/) product built on the same engine. Vertical rightsizing is still [VPA](https://github.com/kubernetes/autoscaler/tree/master/vertical-pod-autoscaler), now sitting next to **stable in-place Pod resize**.
 
 Policy-as-code is covered in depth in [security.md](security.md); this document only covers how it **gates delivery**.
 
@@ -28,7 +28,22 @@ Both watch Git/OCI and apply Kubernetes manifests. They differ in architecture a
 
 Argo CD 3.5 also graduates **Source Hydrator** (render in one repo, sync from another) to beta — useful when template authors and cluster-applied YAML must have different ACLs.
 
-Argo CD **3.6** targets GA on 3 November 2026 (3.6.0-rc2 shipped 6 October 2026). Beyond that, the community has started the **visioning process for Argo CD 4.0** ([CNCF blog, 30 September 2026](https://www.cncf.io/blog/2026/09/30/argocon-north-america-2026-what-to-expect-as-the-argo-community-looks-toward-cd-4-0/)); expect the direction to take shape at ArgoCon NA, co-located with KubeCon + CloudNativeCon NA (9–12 November 2026, Salt Lake City).
+Argo CD **3.6.0 shipped GA on 3 November 2026** ([release](https://github.com/argoproj/argo-cd/releases/tag/v3.6.0)). The
+production-relevant headline is the ApplicationSet progressive-sync
+work: four Prometheus metrics (`argocd_appset_progressive_sync_*`),
+new failure conditions (`ApplicationSetRolloutError`,
+`InvalidRolloutConfig`) so stalled progressive rollouts surface instead
+of hanging, and reconciliation annotations; with progressive sync on,
+the controller waits for all owned applications to reconcile before
+starting the next step ([3.5 → 3.6 upgrade guide](https://argo-cd.readthedocs.io/en/latest/operator-manual/upgrading/3.5-3.6/)).
+Images and binaries now carry SLSA Level 3 provenance. Read the upgrade
+notes before jumping: server-side diff and health-event reporting
+changes can show as cluster drift right after the upgrade, and the
+**3.3 line is now EOL** (supported: 3.4.13 / 3.5.7 / 3.6.0). Beyond
+that, the community has started the **visioning process for Argo CD
+4.0** ([CNCF blog, 30 September 2026](https://www.cncf.io/blog/2026/09/30/argocon-north-america-2026-what-to-expect-as-the-argo-community-looks-toward-cd-4-0/)); expect
+the direction to take shape at ArgoCon NA, co-located with KubeCon +
+CloudNativeCon NA (9–12 November 2026, Salt Lake City).
 
 **October 2026 advisory batch — patch before doing anything else.** On
 6 October 2026 the Argo project disclosed eight advisories, four CRITICAL:
@@ -118,7 +133,7 @@ Karpenter consolidation (see [control-plane-and-node-lifecycle.md](control-plane
 - **Do not set KEDA `minReplicaCount: 0` on a payments API** that must meet a P99 latency SLO from a cold start. Warm min replicas, scale-to-zero the *async* workers.
 - **Do not auto-apply VPA** on the first week. Recommendations + GitOps PRs beat surprise restarts.
 - **Do not treat Kubecost savings recommendations as merge-ready.** They ignore PDBs, JVM heaps, and GPU bin-packing.
-- **Do not pin production to an Argo CD version outside the [supported window](https://endoflife.date/argo-cd).** 3.5 / 3.4 / 3.3 are the supported lines as of August 2026.
+- **Do not pin production to an Argo CD version outside the [supported window](https://endoflife.date/argo-cd).** 3.6 / 3.5 / 3.4 are the supported lines as of November 2026 (the 3.3 line hit EOL on 3 November).
 
 ## Trade-offs
 
