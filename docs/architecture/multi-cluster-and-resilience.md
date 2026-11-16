@@ -72,7 +72,7 @@ A payments platform typically wants: **CAPI or the cloud API** to exist the clus
 
 ### Velero (backup / DR)
 
-[Velero](https://velero.io/) backups Kubernetes objects to object storage and volume data via **CSI snapshots** or **File System Backup** (node-agent, formerly restic/kopia). [Velero 1.18](https://github.com/velero-io/velero) is tested on Kubernetes 1.33–1.35 (the project lists expected compatibility as 1.18–latest; always check the matrix for 1.36/1.37).
+[Velero](https://velero.io/) backups Kubernetes objects to object storage and volume data via **CSI snapshots** or **File System Backup** (node-agent, formerly restic/kopia). [Velero 1.18](https://github.com/velero-io/velero) is the current stable line (tested on Kubernetes 1.33–1.35; always check the matrix for newer clusters). **Velero 1.19.0-rc.1 (6 November 2026)** is the release to watch for DR engineering: a **block data mover** (`velero-block`) integrates with the Kubernetes **CSI Changed Block Tracking (CBT)** API so incremental backups copy only changed blocks; **in-place restores** restore data directly into existing volumes (including clone-and-restore from a snapshot); **fine-grained filters** via `ResourcePolicy` ConfigMaps scope backups/restores per namespace and per kind; namespaces can be selected by label ([release notes](https://github.com/vmware-tanzu/velero/releases/tag/v1.19.0-rc.1)). Until 1.19.0 GA, keep production on 1.18.x and validate the new mover in staging.
 
 Since early 2026 Velero has been a **CNCF Sandbox project**: Broadcom (which
 inherited it via VMware's acquisition of Heptio) donated the code, the

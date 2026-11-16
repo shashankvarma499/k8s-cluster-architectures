@@ -5,6 +5,74 @@ Kubernetes clusters are built. Each entry points at the primary source; the
 deep-dive for that layer (and, where warranted, a fintech-payments ADR) is
 updated in the same commit. Entries are appended newest-first.
 
+## 2026-11-16 — Istio 1.32 GA; Velero 1.19 RC1 (block-level DR); Karpenter DRA coverage expands; K8s 1.38 freezes; KubeCon NA 2026
+
+- **Istio 1.32.0 released 9 November 2026**
+  ([announcement](https://istio.io/latest/news/releases/1.32.x/announcing-1.32/)),
+  supported on Kubernetes **1.33–1.37**. Headline for ambient adopters:
+  **one east-west gateway for mixed meshes** — an `istio-east-west`
+  gateway now also serves sidecar multi-network traffic through an
+  `AUTO_PASSTHROUGH` listener on port 15443, so a mesh with both
+  ambient and sidecar workloads no longer needs a separate east-west
+  gateway for sidecars in each cluster (requires
+  `AMBIENT_ENABLE_MULTI_NETWORK`). Traffic management: **utilization-based
+  load balancing** (DestinationRule `backendUtilization` consuming
+  backend-reported ORCA load reports), richer **outlier detection**
+  (`outlierDetectionHttpErrorCodes`, `failurePercentageThreshold`), and a
+  configurable **`defaultInboundHttpRetryPolicy`** mesh config (`{}`
+  disables default inbound retries). Security/API: experimental
+  **AuthorizationPolicy targeting Gateway API HTTPRoutes** via
+  `targetRefs`, `REQUIRED` JWT rules in RequestAuthentication, mesh-wide
+  ProxyConfig with selectors, and `PILOT_DISABLE_SELF_SIGNED_CA`. See
+  [networking.md](networking.md).
+- **Velero v1.19.0-rc.1 (6 November)**
+  ([release](https://github.com/vmware-tanzu/velero/releases/tag/v1.19.0-rc.1)):
+  the biggest DR-engineering change since CSI data movement shipped. A
+  new **block data mover (`velero-block`)** does block-level backup and
+  restore for both filesystem and block volumes, integrating with the
+  **Kubernetes CSI Changed Block Tracking (CBT) API** so incremental
+  backups transfer only changed blocks. Also new: **volume data in-place
+  restore** (full + incremental, including clone-and-restore from a
+  snapshot), **fine-grained per-namespace/per-kind filters** via
+  `ResourcePolicy` ConfigMaps, and namespace selection by label. It is an
+  RC: test in staging and re-run the fintech DR runbook against the new
+  mover before 1.19.0 GA. See
+  [multi-cluster-and-resilience.md](multi-cluster-and-resilience.md).
+- **Karpenter AWS provider v1.15.2 (12 November)**
+  ([release](https://github.com/aws/karpenter-provider-aws/releases/tag/v1.15.2)):
+  a DRA-metadata refresh that changes which instance types DRA GPU claims
+  can land on. **EFA DRA metadata now covers 302 instance types (up from
+  29)**; NVIDIA DRA metadata added for `g7`/`g7e`; the fractional-GPU
+  `g6f`/`gr6f` types no longer carry NVIDIA DRA metadata, so Karpenter
+  will not pick them for `gpu.nvidia.com` claims. Known issue to avoid:
+  an EC2NodeClass AMI alias with a second `@` (e.g. `al2023@latest@foo`)
+  passes validation and crash-loops the controller, stopping all
+  NodePool provisioning.
+- **Kubernetes 1.38 code/test freeze landed 16–17 November** ([release
+  schedule](https://www.kubernetes.dev/resources/release/)): the feature
+  set is locked; GA remains 16 December. No new patch round since the
+  October one — stable-1.37 is still **v1.37.2**, 1.36 →
+  **v1.36.6**, 1.35 → **v1.35.10** ([tags](https://github.com/kubernetes/kubernetes/tags)).
+  Argo CD cut **v3.6.1** (4 November, UI fixes only: rootpath/basehref and
+  sidebar state, [release](https://github.com/argoproj/argo-cd/releases/tag/v3.6.1)).
+- **KubeCon NA 2026 (9–12 November, Salt Lake City)** ran its first
+  dedicated **AI Inference + Agentic track**
+  ([CNCF announcement](https://www.cncf.io/announcements/2026/08/10/cncf-reveals-kubecon-cloudnativecon-north-america-2026-schedule-adds-new-ai-inference-agentic-track/)):
+  GPU scheduling, model serving (vLLM/KServe), agentic protocols (MCP,
+  Agent Skills, A2A), and AI gateways. The week's theme — "Human Scale,
+  Agent Scale" — plus the shared-service-account attribution problem
+  ([wrap-up coverage](https://www.techtimes.com/articles/330289/20261109/cncfs-kubecon-north-america-2026-opens-salt-lake-city-why-kubernetes-cannot-tell-which-ai-agent.htm))
+  marks **agent identity and attribution as the next architectural gap**:
+  many agents share one ServiceAccount credential, so the API server
+  cannot attribute an action to a specific agent. Expect identity work
+  around agents to be a recurring theme in 2027 designs.
+- **KubeVirt v1.10.0-rc.1 (12 November)**
+  ([release](https://github.com/kubevirt/kubevirt/releases/tag/v1.10.0-rc.1)):
+  `IncrementalBackup` promoted to **beta** with a new
+  `backup.kubevirt.io/v1beta1` API and offline incremental backup; CBT
+  overlays are now keyed by volume + PVC name. Still an RC — design the
+  VM backup path around it, do not ship it to production yet.
+
 ## 2026-11-09 — Gateway API v1.7 GA; Argo CD 3.6 GA; K8s 1.38 hits beta.0; Istio ships a fourth security batch
 
 - **Gateway API v1.7.0 is GA** (landed 5–8 November 2026,
