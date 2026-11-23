@@ -52,7 +52,7 @@ flowchart LR
 
 [Tetragon](https://github.com/cilium/tetragon) is Cilium’s runtime observability and **enforcement** agent. It attaches eBPF to kprobes, tracepoints, LSM hooks, and (in [v1.7](https://isovalent.com/blog/post/tetragon-v1.7-release), June 2026) fentry/fexit. It understands Kubernetes identities (pod, namespace, labels).
 
-Unlike Falco (excellent detection rules, userspace decisions), Tetragon can **kill or block in-kernel** (`Sigkill`, syscall deny) without a round trip. That closes the TOCTOU window that userspace enforcers lose. v1.7 adds CEL-in-BPF filtering, environment-variable collection, and `matchParentBinaries` selectors.
+Unlike Falco (excellent detection rules, userspace decisions), Tetragon can **kill or block in-kernel** (`Sigkill`, syscall deny) without a round trip. That closes the TOCTOU window that userspace enforcers lose. v1.7 adds CEL-in-BPF filtering, environment-variable collection, and `matchParentBinaries` selectors. [v1.8](https://github.com/cilium/tetragon/releases/tag/v1.8.0) (October 2026) adds **stateful tracing policies** (multi-event correlation in policy), `matchCmdArgs` selectors (filter by argv), caller-function filtering and shared-library symbol resolution for uprobes, domain-sharded policy management, tracing-policy `nodeSelector`, and kprobe/uprobe validation via Kubernetes XValidation.
 
 Tetragon is not a PCI control by itself. It is how you prove that the payments API never exec’d `/bin/bash` and never opened `/etc/shadow`.
 

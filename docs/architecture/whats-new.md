@@ -5,6 +5,125 @@ Kubernetes clusters are built. Each entry points at the primary source; the
 deep-dive for that layer (and, where warranted, a fintech-payments ADR) is
 updated in the same commit. Entries are appended newest-first.
 
+## 2026-11-23 — K8s 1.38 sneak peek (kubelet cgroup-driver breaking change, DRA partitionable stable); Velero 1.19 GA; KubeCon NA wrap-up (KubeVirt + NATS graduate)
+
+- **Kubernetes v1.38 Sneak Peek published today**
+  ([blog](https://kubernetes.io/blog/2026/11/23/kubernetes-v1-38-sneak-peek/)) —
+  the first official look at the 1.38 change set (GA 16 December; code/test
+  freeze passed 16–17 November). Changes to plan for:
+  - **Breaking: kubelet requires the container runtime to report its cgroup
+    driver** via the CRI RuntimeConfig RPC
+    ([KEP-4033](https://kep.k8s.io/4033)). The `cgroupDriver` kubelet config
+    field is deprecated **and rejected** unless the temporary
+    `LegacyCgroupDriverFallback` feature gate re-activates the legacy path;
+    kubeadm stops defaulting `cgroupDriver: systemd` and its preflight errors
+    on runtimes without the RPC. The runtime must be up before the kubelet
+    starts. Refresh node images with older runtimes before upgrading.
+  - **Pod-level resources graduate to stable**
+    ([KEP-2837](https://kep.k8s.io/2837)) — with a swap behavior change on
+    Linux cgroup v2 `LimitedSwap` nodes: swap limits are now derived from
+    *pod-level* memory settings, so a Pod whose pod-level request equals its
+    limit gets **no swap**, even if individual containers set a lower request.
+  - **DRA partitionable devices graduate to stable**
+    ([KEP-4815](https://kep.k8s.io/4815)): `DRAPartitionableDevices` locks on —
+    drivers can advertise a GPU both whole and partitioned, and the scheduler
+    allocates only combinations that fit the physical device. See
+    [ai-ml-workloads.md](ai-ml-workloads.md).
+  - **EvictionRequest API (alpha)** ([KEP-4563](https://kep.k8s.io/4563)):
+    coordinated eviction — a controller creates an EvictionRequest, per-Pod
+    *responders* run application-specific preparation (flush, migrate, clean
+    up) before termination, and Kubernetes falls back to PDB-respecting
+    API-initiated eviction when responders are absent or fail. PDBs are not
+    replaced.
+  - Also: **kuberc graduates to stable** ([KEP-3104](https://kep.k8s.io/3104))
+    and the `name` alias in credential-plugin allowlist entries is dropped
+    (use `command`); the `KUBECTL_REMOTE_COMMAND_WEBSOCKETS` /
+    `KUBECTL_PORT_FORWARD_WEBSOCKETS` opt-out variables are removed
+    (WebSockets first, SPDY fallback, [KEP-4006](https://kep.k8s.io/4006));
+    cgroup v1 support gets a formal removal warning
+    ([KEP-5573](https://kep.k8s.io/5573)); and admission webhooks have not
+    received TokenReview/SelfSubjectReview/SubjectAccessReview/etc. requests
+    since 1.37 ([KEP-5793](https://kep.k8s.io/5793)). See
+    [control-plane-and-node-lifecycle.md](control-plane-and-node-lifecycle.md).
+- **Velero v1.19.0 is GA** (23 November,
+  [release](https://github.com/velero-io/velero/releases/tag/v1.19.0)): the
+  rc.1 feature set is now stable — **block data mover** (`velero-block`,
+  CBT-aware incremental backup and restore for filesystem *and* block
+  volumes), **volume data in-place restore** (full + incremental +
+  clone-and-restore from snapshot), **fine-grained ResourcePolicy filters**,
+  namespace selection by label, and a new **global volume policy** ConfigMap
+  for default volume backup rules. See
+  [multi-cluster-and-resilience.md](multi-cluster-and-resilience.md).
+- **KubeCon NA 2026 wrap-up** — announcements from the 9–12 November event
+  that the previous entries missed:
+  - **KubeVirt graduated from the CNCF** (10 November,
+    [announcement](https://www.cncf.io/announcements/2026/11/10/cloud-native-computing-foundation-announces-kubevirt-graduation/)).
+    **NATS also graduated**
+    ([announcement](https://www.cncf.io/announcements/2026/11/10/cncf-announces-nats-graduation-solidifying-a-production-ready-foundation-for-messaging-across-cloud-and-edge/)) —
+    the messaging/streaming fabric widely used for agent and edge
+    communication is now a graduated standard.
+  - **CloudNativePG reached incubation** (TOC vote 2 November,
+    [announcement](https://www.cncf.io/blog/2026/11/10/cloudnativepg-becomes-a-cncf-incubating-project/)),
+    alongside K8gb, Meshery, and Open Cluster Management; **HAMi advanced to
+    incubation** for shared/heterogeneous accelerator scheduling.
+  - New sandbox projects: **Agent Substrate** (zero-trust runtime for AI
+    agents on Kubernetes), **OpenShell** (NVIDIA-spearheaded agent-runtime
+    governance: which resources agents can access, where inference requests
+    route), **llm-d** (distributed LLM inference, now at 1.0), and **OpenRL**
+    (Kubernetes-native reinforcement-learning orchestration) — the "secure
+    agent runtime" layer the identity/attribution theme of KubeCon predicted.
+    The Kubernetes AI Conformance Program passed **40 certified platforms**
+    ([CNCF milestones](https://www.cncf.io/announcements/2026/11/10/cncf-hits-major-milestones-with-global-community-growth-record-industry-investment-and-a-new-generation-of-projects-to-build-ai-systems-in-production/)).
+- **KubeVirt v1.10.0 GA** (18 November,
+  [changelog](https://kubevirt.io/2026/changelog-v1.10.0.html)): promotion of
+  rc.1 — `IncrementalBackup` beta with the `backup.kubevirt.io/v1beta1` API,
+  offline incremental backup. Operator caveat: `kubevirt-operator.yaml` now
+  exceeds the **256 KiB annotation limit**, so install/update with
+  `kubectl apply --server-side`, not client-side apply.
+- **Karpenter AWS provider v1.15.3 — Action Required** (20 November,
+  [release](https://github.com/aws/karpenter-provider-aws/releases/tag/v1.15.3)):
+  `EC2NodeClass` selector terms with an empty `tags` map, `name`, or
+  `ssmParameter` are now **ignored**; a NodeClass whose terms are all empty
+  becomes `NotReady` until fixed (nodes launched from it are *not* replaced
+  automatically — fix the NodeClass, then replace them). Audit NodeClasses
+  before upgrading. The same change landed in the LTS lines **v1.14.4** and
+  **v1.9.4**.
+- **ingress-nginx CVE-2026-116472** (backfill; advisory published 5 November
+  on the Kubernetes discuss forum
+  ([advisory](https://discuss.kubernetes.io/t/security-advisory-cve-2026-116472-ingress-nginx-mirror-target-self-dos/35554))):
+  a user who can create Ingresses can DoS the ingress-nginx data plane or
+  redirect other Ingresses' traffic via the `mirror-target` annotation.
+  Kubernetes **will not issue a fix** — ingress-nginx maintenance ended March
+  2026, making this the first unfixed CVE in the retired controller (exactly
+  the scenario this repo's networking guidance warns about). SUSE ships a fix
+  in its fork (1.15.2-prime1); mitigations: admission control rejecting the
+  annotation, or `annotations-risk-level: Medium|Low`. See
+  [networking.md](networking.md).
+- **Tetragon v1.8.0** (backfill; 30 October,
+  [release](https://github.com/cilium/tetragon/releases/tag/v1.8.0)): the
+  largest release yet (566 PRs). Headlines: **stateful tracing policies**,
+  `matchCmdArgs` selectors (filter by individual argv entries),
+  caller-function filtering for uprobes, shared-library symbol resolution for
+  uprobe overrides, domain-sharded tracing-policy management, tracing-policy
+  `nodeSelector`, and kprobe/uprobe validation moved to Kubernetes
+  XValidation markers. See [security.md](security.md).
+- **Kueue v0.21.0-rc.1** (20 November,
+  [release](https://github.com/kubernetes-sigs/kueue/releases/tag/v0.21.0-rc.1)):
+  `KueueDRAIntegrationPrioritizedList` and consumable-capacity quota promote
+  to **beta on by default**; ClusterQueue manifests omitting
+  `spec.concurrentAdmissionPolicy.migration.mode` now default to
+  `TryPreferredFlavors`. Both DRA gates carry upgrade notes if you disable
+  `KueueDRAIntegration`.
+- **Patch round:** Cilium **v1.20.5** (17 November) — L7 redirect-ID,
+  egress-policy, and multi-pool IPAM bugfix batch; Argo CD **v3.6.2 /
+  v3.5.8 / v3.4.14** (18 November), including the CVE-2026-77299 dependency
+  fix; Flux **v2.10.1** (20 November) — credential-cache fix so
+  ServiceAccount/GCP-provider annotation changes take effect on the next
+  reconcile; vCluster **v0.38.0** (17 November, limited-availability) —
+  embedded-etcd defrag tuning, syncer keeps unsynced changes, Podman driver
+  support. No new Kubernetes patch round: stable lines remain v1.37.2 /
+  v1.36.6 / v1.35.10 ([tags](https://github.com/kubernetes/kubernetes/tags)).
+
 ## 2026-11-16 — Istio 1.32 GA; Velero 1.19 RC1 (block-level DR); Karpenter DRA coverage expands; K8s 1.38 freezes; KubeCon NA 2026
 
 - **Istio 1.32.0 released 9 November 2026**

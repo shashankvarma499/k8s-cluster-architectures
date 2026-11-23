@@ -129,7 +129,7 @@ Cilium can **run next to Istio ambient**; the Cilium docs include a dedicated [I
 ## When NOT to use
 
 - **Do not install a mesh “for observability.”** Hubble + OpenTelemetry sidecars (or eBPF) cover most of that without mTLS.
-- **Do not run ingress-nginx in production after March 2026.** It is unmaintained. F5’s separate NGINX Ingress Controller and NGINX Gateway Fabric are different projects; community `ingress-nginx` is the retired one.
+- **Do not run ingress-nginx in production after March 2026.** It is unmaintained. F5’s separate NGINX Ingress Controller and NGINX Gateway Fabric are different projects; community `ingress-nginx` is the retired one. The first post-EOL CVE, [CVE-2026-116472](https://discuss.kubernetes.io/t/security-advisory-cve-2026-116472-ingress-nginx-mirror-target-self-dos/35554) (November 2026), is **unfixed by design**: an Ingress creator can DoS the data plane via the `mirror-target` annotation. SUSE's fork (1.15.2-prime1) ships a fix; mitigate the retired controller with admission control rejecting the annotation or `annotations-risk-level: Medium|Low`.
 - **Do not enable Cilium L7 policy on every namespace on day one.** Every HTTP-aware rule redirects that traffic through Envoy and changes failure modes.
 - **Do not treat Cilium mutual authentication as GA.** Docs still mark it **beta** with an explicit limitations list.
 - **Do not put experimental Gateway API resources (`XBackend`, `XMesh`, `gateway.networking.x-k8s.io`) in regulated clusters.**

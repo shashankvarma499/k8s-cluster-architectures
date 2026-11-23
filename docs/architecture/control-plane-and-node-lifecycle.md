@@ -9,9 +9,35 @@ Kubernetes itself is on the 1.38 cycle: **v1.38.0-beta.0** shipped on
 preemption (KEP-5710) marked stable** — all-or-nothing scheduling for
 AI/ML and HPC via the Workload / PodGroup APIs — and
 `OpenAPIV2LazyBuild` (lazy `/openapi/v2` builds) beta on by default.
-Code/Test Freeze lands 16–17 November; GA is 16 December
+Code/Test Freeze landed 16–17 November; GA is 16 December
 ([release schedule](https://www.kubernetes.dev/resources/release/)).
-The October patch round is out: 1.37.2 / 1.36.6 / 1.35.10 / 1.34.13.
+The [v1.38 sneak peek](https://kubernetes.io/blog/2026/11/23/kubernetes-v1-38-sneak-peek/)
+(23 November) previews what to plan for:
+
+- **Breaking: the kubelet requires the CRI runtime to report its cgroup
+  driver** ([KEP-4033](https://kep.k8s.io/4033)). The `cgroupDriver` kubelet
+  config field is deprecated and **rejected** unless the temporary
+  `LegacyCgroupDriverFallback` feature gate is enabled; kubeadm no longer
+  defaults `cgroupDriver: systemd` and its preflight fails on runtimes
+  without the RuntimeConfig RPC. The runtime must be up before the kubelet
+  starts. Rebuild node images on runtimes that support the RPC before
+  upgrading to 1.38.
+- **Pod-level resources graduate to stable** ([KEP-2837](https://kep.k8s.io/2837)):
+  on Linux cgroup v2 `LimitedSwap` nodes, swap is derived from *pod-level*
+  memory settings — pod-level request == limit means **no swap**, even if a
+  container inside sets a lower request.
+- **DRA partitionable devices graduate to stable**
+  ([KEP-4815](https://kep.k8s.io/4815)); `DRAPartitionableDevices` locks on.
+- **EvictionRequest API (alpha)** ([KEP-4563](https://kep.k8s.io/4563)): a
+  coordinated-eviction object lets per-Pod responders flush, migrate, or
+  clean up before termination, falling back to PDB-respecting eviction when
+  responders are absent.
+- kuberc graduates to stable ([KEP-3104](https://kep.k8s.io/3104)) and drops
+  the `name` allowlist alias; the WebSocket opt-out env vars are removed
+  ([KEP-4006](https://kep.k8s.io/4006)); cgroup v1 removal is flagged as
+  future ([KEP-5573](https://kep.k8s.io/5573)).
+The October patch round is out: 1.37.2 / 1.36.6 / 1.35.10 / 1.34.13
+(no newer round as of 23 November).
 
 ## What it is
 
@@ -59,7 +85,7 @@ Both watch unschedulable Pods. They differ in *what they scale*.
 | Cloud coverage | AWS, GCP, Azure, many others | AWS is production-grade; Azure provider exists; GCP is limited |
 | API | Flags + group autoscaling | `NodePool` + cloud `NodeClass` (`EC2NodeClass` on AWS), `karpenter.sh/v1` |
 
-Karpenter’s model: the scheduler marks a Pod unschedulable → Karpenter computes a NodeClaim that satisfies the Pod (and as many siblings as will fit) → the cloud provider launches that instance → the node joins → the Pod binds. Consolidation continuously asks “is there a cheaper or smaller node that still fits?”.
+Karpenter’s model: the scheduler marks a Pod unschedulable → Karpenter computes a NodeClaim that satisfies the Pod (and as many siblings as will fit) → the cloud provider launches that instance → the node joins → the Pod binds. Consolidation continuously asks “is there a cheaper or smaller node that still fits?”. Note the AWS provider **v1.15.3 behavior change (20 November 2026)**: `EC2NodeClass` selector terms with an empty `tags` map, `name`, or `ssmParameter` are now ignored, and a NodeClass whose terms are all empty goes `NotReady` — audit NodeClasses before upgrading ([release](https://github.com/aws/karpenter-provider-aws/releases/tag/v1.15.3)).
 
 **Karpenter v1.15 (10 October 2026)** starts the move toward *predictive*
 node scaling and tighter disruption control
